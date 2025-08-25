@@ -111,9 +111,10 @@ export default function PoliticoLink({ nome, className = '', showIcon = true }: 
       .replace(/\s+/g, '-')
       .substring(0, 50)
     
+    // Use a special route for non-found politicians
     return (
       <Link 
-        href={`/politico/${genericSlug}`}
+        href={`/politico/not-found?name=${encodeURIComponent(nome)}`}
         className={`text-gray-600 hover:text-gray-800 hover:underline transition-colors ${className}`}
         title={`Cerca profilo di ${nome} (potrebbe non essere ancora mappato)`}
       >
