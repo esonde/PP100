@@ -39,13 +39,14 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: registry-data
-        path: public/data/persons.jsonl
-        path: public/data/person_xref.parquet
-        path: public/data/person_aliases.parquet
-        path: public/data/party_registry.jsonl
-        path: public/data/party_membership.parquet
-        path: public/data/roles.parquet
-        path: public/data/identities_inbox.jsonl
+        path: |
+          public/data/persons.jsonl
+          public/data/person_xref.parquet
+          public/data/person_aliases.parquet
+          public/data/party_registry.jsonl
+          public/data/party_membership.parquet
+          public/data/roles.parquet
+          public/data/identities_inbox.jsonl
         retention-days: 7
         
     - name: Commit and push changes
