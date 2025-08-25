@@ -135,9 +135,9 @@ export default function MetricsPage() {
   return (
     <div className="max-w-6xl mx-auto">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">📊 Metriche PP</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">📊 Metriche PP (Punti Politico)</h1>
         <p className="text-gray-600">
-          Punteggi PP (Parlamento Punteggio) per i parlamentari
+          Punteggi PP (Punti Politico) per i parlamentari
         </p>
         <div className="mt-4 text-sm text-gray-500">
           Finestra rolling: {scoresData.window_days} giorni • 
@@ -158,7 +158,7 @@ export default function MetricsPage() {
           <div className="text-2xl font-bold text-green-600">
             {(scoresData.scores.reduce((sum, s) => sum + s.pp_score, 0) / scoresData.scores.length).toFixed(1)}
           </div>
-          <div className="text-sm text-gray-600">PP Medio</div>
+          <div className="text-sm text-gray-600">PP (Punti Politico) Medio</div>
         </div>
         <div className="card text-center">
           <div className="text-2xl font-bold text-yellow-600">
@@ -177,7 +177,7 @@ export default function MetricsPage() {
       {/* Scores Table */}
       <div className="card">
         <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Classifica PP</h2>
+          <h2 className="text-xl font-semibold text-gray-900 mb-4">Classifica PP (Punti Politico)</h2>
           <div className="flex space-x-4 text-sm">
             <button
               onClick={() => handleSort('pp_score')}
@@ -274,7 +274,7 @@ export default function MetricsPage() {
 
       {/* Legend */}
       <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-        <h3 className="font-medium text-gray-900 mb-3">📋 Legenda Componenti PP</h3>
+                  <h3 className="font-medium text-gray-900 mb-3">📋 Legenda Componenti PP (Punti Politico)</h3>
         <div className="grid md:grid-cols-5 gap-4 text-sm">
           <div>
             <span className="font-bold text-blue-600">Q - Quality:</span>

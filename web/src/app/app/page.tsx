@@ -52,7 +52,7 @@ export default function Home() {
 
       <div className="card">
         <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-          📈 Punteggio PP (Parlamento Punteggio)
+          📈 Punteggio PP (Punti Politico)
         </h2>
         <p className="text-gray-600 mb-4">
           Il sistema calcola un punteggio da 0 a 100 per ogni parlamentare basato su:

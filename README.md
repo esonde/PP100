@@ -11,7 +11,7 @@ PP100 analizza automaticamente gli interventi parlamentari per rilevare:
 - **Coerenza** delle posizioni
 - **Qualità generale** del dibattito
 
-Il sistema calcola un **Punteggio PP (Parlamento Punteggio)** da 0 a 100 per ogni parlamentare basato su 5 componenti:
+Il sistema calcola un **Punteggio PP (Punti Politico)** da 0 a 100 per ogni parlamentare basato su 5 componenti:
 - **Q** - Quality (Argomentatività e chiarezza)
 - **K** - Knowledge (Preparazione e citazioni corrette)
 - **V** - Veracity (Accuratezza e evitare fallacie)
@@ -139,7 +139,7 @@ python scripts/validate_schemas.py
 
 - `schemas/manifest.schema.json` - Gestione file pubblicati
 - `schemas/cards.schema.json` - Eventi rilevati (fallacie, spin, etc.)
-- `schemas/scores-rolling.schema.json` - Punteggi PP rolling
+- `schemas/scores-rolling.schema.json` - Punteggi PP (Punti Politico) rolling
 
 ### Validazione CI
 
@@ -215,7 +215,7 @@ Il `manifest.json` traccia:
 ### M6 - Stance & PP scoring
 - [ ] Modello stance (pro/contro/neutro)
 - [ ] Join con votazioni/atti
-- [ ] Calcolo PP e rolling scores
+- [ ] Calcolo PP (Punti Politico) e rolling scores
 
 ### M7 - Framework Agentico
 - [ ] Orchestratore insight
