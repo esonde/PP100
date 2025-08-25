@@ -247,7 +247,6 @@ jobs:
       uses: actions/deploy-pages@v4
       environment:
         name: github-pages
-        url: ${{ steps.deployment.outputs.page_url }}
       with:
         path: web/out
       if: success()
