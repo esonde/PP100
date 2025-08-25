@@ -22,21 +22,25 @@
       "filename": "interventions-2025-08-25.parquet",
       "version": "0.1.0",
       "generated_at": "2025-08-25T08:07:15Z",
-      "status": "active"
+      "status": "active",
+      "checksum": "86db4382c5fa389c2dc5397f691102bf8376ef35420b2b90a7b872b9db56a8be",
+      "record_count": 9
     },
     "persons": {
       "filename": "persons.jsonl",
       "version": "0.1.0",
       "generated_at": "2025-08-25T11:50:00Z",
       "record_count": 10,
-      "status": "active"
+      "status": "active",
+      "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     },
     "parties": {
       "filename": "party_registry.jsonl",
       "version": "0.1.0",
       "generated_at": "2025-08-25T11:50:00Z",
       "record_count": 15,
-      "status": "active"
+      "status": "active",
+      "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     }
   },
   "status": {
