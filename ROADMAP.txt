@@ -61,149 +61,93 @@
 
 ---
 
-### M2 — P1 Stile & P2 Topics “light”
+### M2 — P1 Stile & P2 Topics "light"
+Scopo: arricchire con feature a basso costo e stabili; inizializzare **person_features**.
+Deliverable
+• enrich/run_enrich.py con moduli:
+  – style.py (Gulpease, len, %hedges, %citazioni)
+  – topic_light.py (tf-idf + NMF 8 topic; fit settimanale)
+Output:
+  – features-YYYYMMDD.parquet (topic_vec[8], top_terms)
+  – person_features.parquet (prime metriche per-persona: talk_time_share, pathos_pct, policy_density rolling 30d; field method_version)
+  – grafici PNG in public/plots/
+UI: /metrics aggiornato.
+Rischi: CPU su Actions → cache modelli/vectorizer.
 
-**Scopo**: arricchire con feature a basso costo e stabili.
+### M3 — fastText triage (Argomentatività + Check-worthiness)
+Scopo: ridurre il costo LLM selezionando frasi candidate; loggare effetti nel **person_features**.
+Deliverable
+• fasttext/train_arg.py, train_cw.py, infer.py (+ gold set).
+Output:
+  – arg-score-YYYYMMDD.parquet, claims-cw-ranked-YYYYMMDD.jsonl
+  – aggiornamento person_features (arg_rate_rolling, cw_hit_rate)
+Accettazione: badge "triage attivo" visibile; coerenza rolling.
 
-**Deliverable**
+### M4 — Near-duplicate & Agenda Adoption
+Scopo: cluster simili per misurare diffusione narrative; prime **badge** deterministiche.
+Deliverable
+• Prefiltro cosine (fastText) + conferma E5-small; cache embeddings.
+Output:
+  – duplicates-YYYYMMDD.parquet (cluster_id, leader_id, lag, size)
+  – badges.jsonl (Copia-incolla Radar p95 con ruleset_version)
+UI: badge in /feed.
+Rischi: costi embeddings → cache su disco.
 
-* `enrich/run_enrich.py` con moduli:
+### M5 — LLM ragionatore (JSON-only) + Validator
+Scopo: estrazioni affidabili su subset con un solo LLM; popolamento **claims/commitments** e riflessi nel profilo.
+Deliverable
+• enrich/llm_runner.py (prompt Appendix A1, cache sha, validator, gating ≥0.66).
+Output:
+  – llm-events-YYYYMMDD.jsonl + cards-YYYYMMDD.jsonl
+  – person_features aggiornato (ad_hominem_rate, claim_density, commitment_count)
+  – provenance & audit (generated_by_commit, evidence_refs)
+UI: /feed con link+highlight; fallacia del minuto.
+Rischi: allucinazioni → span-proof + whitelist + gating.
 
-  * `style.py` (Gulpease, len, %hedges, %citazioni normative/numeriche).
-  * `topic_light.py` (tf‑idf + NMF 8 topic; fit settimanale → `models/topic_nmf.joblib`).
-* Output: `features-YYYYMMDD.parquet` (include `topic_vec[8], top_terms`).
-* Grafici base in `public/plots/` (PNG) generati da job.
-
-**Accettazione**
-
-* `/metrics` mostra istogrammi/facet sui nuovi campi; schema validato.
-
-**Rischi**: tempi CPU su Actions → mitigare con cache `pip` e job separati.
-
----
-
-### M3 — fastText triage (Argomentatività + Check‑worthiness)
-
-**Scopo**: ridurre il costo LLM selezionando frasi candidate.
-
-**Deliverable**
-
-* Cartella `enrich/fasttext/` con:
-
-  * `train_arg.py`, `train_cw.py` (rolling split temporale; Platt/temperature opzionale).
-  * `infer.py` per batch su frasi → `arg-score-YYYYMMDD.parquet` e `claims-cw-ranked-YYYYMMDD.jsonl`.
-* Gold set starter (`data/gold/`) con 300–500 frasi etichettate; guideline labeling.
-* In CI: test di caricamento modelli e inferenza su sample.
-
-**Accettazione**
-
-* File prodotti e letti dal web (badge “triage attivo” nella UI).
-
-**Rischi**
-
-* Qualità bassa iniziale → **Mitigazione**: soglie conservative, solo ranking; feedback loop con gold set.
-
----
-
-### M4 — P3 Near‑duplicate & Agenda Adoption
-
-**Scopo**: cluster di frasi simili per misurare diffusione narrative.
-
-**Deliverable**
-
-* Prefiltro cosine su medie di vettori (fastText) + conferma con **E5‑small** (CPU ok) via `sentence-transformers`.
-* `duplicates-YYYYMMDD.parquet` (cluster\_id, leader\_id, lag, size).
-* Badge “Copia‑incolla Radar” nel feed.
-
-**Accettazione**
-
-* Almeno 2 cluster > 3 oratori rilevati su dati reali dell’ultima settimana.
-
-**Rischi**
-
-* Costi embeddings → cache su disco (`.cache/embeddings/`) con chiave sha256(frase).
-
----
-
-### M5 — LLM ragionatore (JSON‑only) + Validator deterministici
-
-**Scopo**: estrazioni affidabili su subset (P3/P4/P6) con **un solo LLM** e guardrail duri.
-
-**Deliverable**
-
-* `enrich/llm_runner.py` con:
-
-  * prompt Appendix A1, **output‑only JSON**;
-  * cache per task|prompt\_ver|frase;
-  * **validator**: schema (pydantic), span‑check, whitelist variabili/unità/periodi, gating `confidence ≥ 0.66`.
-* Output: `llm-events-YYYYMMDD.jsonl`.
-* Generazione `cards-YYYYMMDD.jsonl` (regole P11) per: fallacia del minuto, spin‑o‑metro, copia‑incolla.
-* UI: `/feed` mostra cards con link + highlight span.
-
-**Accettazione**
-
-* 1 card al giorno prodotta da eventi reali con evidence linkabile.
-
-**Rischi**
-
-* Hallucinations → **Mitigazione**: publish‑gate + span‑proof + whitelist.
-
----
-
-### M6 — P8 Stance & join con voti/atti + P9/P10 Indicatori & PP
-
-**Scopo**: chiudere il cerchio discorso→voto→PP.
-
-**Deliverable**
-
-* `models/stance.joblib` (logistic su tf‑idf, 3 classi: pro/contro/neutro).
-* Join con votazioni/atti (open data Camera/Senato) → `join-votes-YYYYMMDD.parquet`.
-* `scoring/run_scoring.py` per Q/K/V/I/R, PP e rolling 30–60 gg → `scores-rolling.parquet`.
-* UI: pagine oratore/partito con trend PP e breakdown componenti.
-
-**Accettazione**
-
-* PP visibile per almeno 10 oratori con intervalli di confidenza (bootstrap).
-
-**Rischi**
-
-* Mapping discorso↔atto rumoroso → filtri su finestra temporale e keyword, flag “low‑confidence”.
-
----
+### M6 — Stance & Join voti/atti + Indicatori & PP
+Scopo: chiudere il cerchio discorso→voto→PP; **Profile Pack** iniziale.
+Deliverable
+• models/stance.joblib (3 classi), join votazioni → join-votes-YYYYMMDD.parquet.
+• scoring/run_scoring.py per Q/K/V/I/R, PP rolling 30–60 gg → scores-rolling.parquet.
+• profiles/build_profile_pack.py: genera public/data/profiles/{person_id}.json (snapshot con PP, componenti, segnali chiave, badges).
+UI: /politico/[slug] legge Profile Pack (fetch singola); breakdown PP + CI.
+Accettazione: PP per ≥10 oratori con CI (bootstrap) e pagine profilo on.
+Rischi: mapping rumoroso → flag low-confidence + filtri temporali/keywords.
 
 ### M7 — Framework Agentico (Insight & Blog)
+Scopo: report automatici giornalieri + registro previsioni; integrazione profili.
+Deliverable
+• insights/run_insights.py (Profiler→Ideatore→Tester→Curatore→Redattore→Archivista).
+• Output: /web/content/blog/YYYY-MM-DD.md(x), public/rss.xml, predictions.jsonl.
+• Integrazione links da Profile Pack a insight (cross-ref persona↔card↔blog).
+UI: indice blog + pagina "Trasparenza" con errori ex-post.
+Rischi: multiple testing → Benjamini–Hochberg + holdout temporale.
 
-**Scopo**: report automatici giornalieri + registro previsioni.
+### M8 — Nightly refine (XML/stenografici) & Qualità
+Scopo: rielaborare con sorgenti "gold"; aggiornare **registry SCD2** prima dei ricalcoli; qualità/trasparenza.
+Deliverable
+• Pipeline: registry SCD2 → parse XML → riallinea span → ricalcolo llm-events/PP.
+• Audit completo: public/data/audit/*.jsonl (pp_version, ruleset_version, motivazioni).
+• Gold set esteso (κ≥0.65) e backtest 12 mesi; pagina "Come misuriamo" aggiornata.
+Accettazione
+• Differenze live vs refine mostrate/versionate; riproducibilità garantita.
 
-**Deliverable**
-
-* `insights/run_insights.py` con ruoli: Profiler → Ideatore (LLM) → Tester (Python) → Curatore → Redattore (LLM) → Archivista.
-* Output: `/web/content/blog/YYYY-MM-DD.md(x)`, `public/data/predictions.jsonl`, `public/rss.xml`.
-* UI: indice blog + pagina “Trasparenza” con errori ex‑post (Brier/log‑loss).
-
-**Accettazione**
-
-* Un post generato con ≥5 insight (ognuno con caveat) e collegamenti a card/dati.
-
-**Rischi**
-
-* Overfitting/Multiple testing → controllo BH e holdout temporale obbligatorio.
-
----
-
-### M8 — Nightly refine (XML/stenografici), robustezza & qualità
-
-**Scopo**: rielaborare con sorgenti “gold” e migliorare qualità/trasparenza.
-
-**Deliverable**
-
-* Parser XML Camera + stenografico Senato (HTML/PDF→XML se disponibile) con riallineamento `span`.
-* Ricalcolo nightly di `llm-events` e `PP` con dati raffinati; audit log `pp_version`.
-* Pagina “Come misuriamo” + gold set esteso (κ di Cohen) + backtest 12 mesi.
-
-**Accettazione**
-
-* Differenze tra live e refine mostrate e versionate; varianti riproducibili.
+### Checklists aggiuntive
+• Registry
+  [ ] Schemi persons/party/roles/memberships
+  [ ] Script build_registry.py / build_memberships.py
+  [ ] Fixture + test alias/omografi
+• Profile Pack
+  [ ] build_profile_pack.py
+  [ ] schemas/profile_pack.schema.json
+  [ ] UI /politico/[slug] → fetch singola
+• Feature Store
+  [ ] person_features.parquet con method_version & CI
+  [ ] badges.jsonl con ruleset_version
+• Audit & Provenance
+  [ ] evidence_refs ovunque richiesto
+  [ ] generated_by_commit nei file pubblicabili
+  [ ] public/data/audit/*.jsonl e pagina trasparenza
 
 ---
 
@@ -233,10 +177,15 @@
 │  └─ scripts/read_data.ts
 ├─ public/data/            # JSON/Parquet pubblicati
 ├─ public/plots/           # grafici png
+├─ identities/             # sync registry & SCD2 (persons/parties/roles)
+│  ├─ build_registry.py    # aggiorna persons/person_xref/aliases/party_*
+│  └─ build_memberships.py # aggiorna party_membership/roles
+├─ profiles/               # materializzazione viste profilo
+│  └─ build_profile_pack.py
 ├─ schemas/                # JSON Schema/pydantic models
 ├─ .github/workflows/
 │  ├─ ingest.yml           # */5 — pipeline + build + deploy
-│  ├─ nightly.yml          # 02:00 — refine
+│  ├─ nightly.yml          # 02:00 — registry SCD2 + refine XML + ricalcoli
 │  └─ insights.yml         # 02:30 — report/RSS
 ├─ Makefile  pre-commit-config.yaml
 ├─ README.md  CONTRIBUTING.md  CODE_OF_CONDUCT.md
@@ -248,7 +197,7 @@
 * **concurrency**: `group: pipeline-${{ github.ref }}` con `cancel-in-progress: true`.
 * **jobs**: `setup → ingest → enrich → scoring → build_web → deploy_pages`.
 * **cache**: pip + embeddings (`actions/cache`), artefatti Parquet per 1 giorno.
-* **telemetria**: summary Markdown del job con conteggi record; sezione “Degradazioni disattivate”.
+* **telemetria**: summary Markdown del job con conteggi record; sezione "Degradazioni disattivate".
 
 ## Data contracts & validazione
 
@@ -259,7 +208,7 @@
 
 1. **Cambio HTML sorgenti** → abstract adapter + fixtures + fallback `requests_html` + XPaths multipli.
 2. **PDF complessi (Senato)** → estrazione `pdfminer.six` + heuristics; se fragile, rimandare a M8 (XML night).
-3. **Limiti cron Pages/Actions** → consolidare in un job unico e ridurre heavy steps a 15’ se necessario.
+3. **Limiti cron Pages/Actions** → consolidare in un job unico e ridurre heavy steps a 15' se necessario.
 4. **Costi LLM** → gating aggressivo (M3) e `prompt caching`; limite max call per job.
 5. **Dimensione repo** → ruotare file per data, tenere solo ultimi N giorni in `main`, archivio su Releases.
 
@@ -268,7 +217,7 @@
 * **Schema lock**: nessun breaking change senza bump.
 * **Test**: 80% per parsing/validatori; golden tests su 10 esempi reali per pipeline critiche.
 * **Calibrazione**: κ di Cohen ≥ 0.65 sui gold set (fallacie/stance) prima di pubblicare metriche globali.
-* **Trasparenza**: pagina “Come misuriamo” con formule PP e pesi versionati.
+* **Trasparenza**: pagina "Come misuriamo" con formule PP e pesi versionati.
 
 ## Checklist iniziale (aprire come Issues con label)
 
@@ -277,15 +226,16 @@
 * [ ] M1: adapter Camera (HTML) + tests
 * [ ] M1: adapter Senato (HTML) + tests
 * [ ] M1: normalizzazione Parquet + spans frasi
-* [ ] M2: style.py + topic\_light.py + modelli NMF con cache
-* [ ] M3: fastText train/infer (arg, cw) + gold set starter
-* [ ] M4: duplicates (fastText avg → E5‑small) + cache embeddings
-* [ ] M5: llm\_runner + validators + cards feed
-* [ ] M6: stance tf‑idf + join voti + scoring PP
-* [ ] M7: orchestratore insight + blog + RSS
-* [ ] M8: refine XML/stenografico + audit qualità
+* [ ] M1.5: registry persons/parties + schemi + test fixture
+* [ ] M2: style.py + topic_light.py + modelli NMF con cache + person_features
+* [ ] M3: fastText train/infer (arg, cw) + gold set + person_features update
+* [ ] M4: duplicates (fastText avg → E5‑small) + cache embeddings + badges
+* [ ] M5: llm_runner + validators + cards feed + provenance
+* [ ] M6: stance tf‑idf + join voti + scoring PP + Profile Pack
+* [ ] M7: orchestratore insight + blog + RSS + cross-ref profili
+* [ ] M8: refine XML/stenografico + audit qualità + registry SCD2
 
-## Script pronti‑all’uso (snippet CLI)
+## Script pronti‑all'uso (snippet CLI)
 
 ```bash
 # Validazione schemi prima del commit
@@ -299,7 +249,7 @@ python enrich/llm_runner.py --day 2025-08-24 --limit 300 --min-conf 0.66
 python scoring/run_scoring.py --window 60
 ```
 
-## Note sull’UI
+## Note sull'UI
 
 * `/feed`: cards ordinarie con badge (evidence, confidenza, severità, cluster size).
 * `/politico/[slug]`: pagina oratore con PP rolling + breakdown Q/K/V/I/R.
@@ -312,7 +262,7 @@ python scoring/run_scoring.py --window 60
 
 1. **Esegui M0** e committa mock + schemas + CI Pages.
 2. **Apri tutte le Issues della checklist** (epic per milestone) e assegna priorità.
-3. **Procedi M1→M2** per avere il primo dato reale a UI stabile.
+3. **Procedi M1→M1.5** per avere il primo dato reale a UI stabile + registry base.
 4. **Blocca i contratti** prima di attivare LLM (M5).
 
-> Con questa sequenza hai sempre un sito funzionante; ogni milestone aggiunge valore visibile mentre limita l’esposizione al rischio.
+> Con questa sequenza hai sempre un sito funzionante; ogni milestone aggiunge valore visibile mentre limita l'esposizione al rischio.
