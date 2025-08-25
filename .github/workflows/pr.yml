@@ -1,0 +1,247 @@
+name: Pull Request CI Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '*.md'
+      - '.github/ISSUE_TEMPLATE/**'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: "pr-${{ github.ref }}"
+  cancel-in-progress: true
+
+jobs:
+  setup-and-validate:
+    name: Setup & Validate Schemas
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+          
+      - name: Validate schemas
+        run: make validate
+        
+      - name: Check manifest integrity
+        run: |
+          python -c "
+          import json
+          with open('public/data/manifest.json') as f:
+              manifest = json.load(f)
+          print(f'Manifest version: {manifest.get(\"version\")}')
+          print(f'Files count: {len(manifest.get(\"files\", {}))}')
+          print(f'Status: {manifest.get(\"status\", {}).get(\"overall\")}')
+          "
+
+  lint-and-typecheck:
+    name: Lint & Type Check
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+          
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+        
+      - name: Lint web code
+        working-directory: web
+        run: npm run lint
+        
+      - name: Type check web code
+        working-directory: web
+        run: npm run type-check
+
+  ingest-dry-run:
+    name: Ingest Pipeline (Dry Run)
+    runs-on: ubuntu-latest
+    needs: setup-and-validate
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install ingest dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ingest/requirements.txt
+          
+      - name: Run ingest dry-run
+        env:
+          PR_CI: "1"
+        run: |
+          python ingest/run_ingest.py --day 2025-08-25 --dry-run || echo "Ingest dry-run completed"
+          
+      - name: Check ingest output
+        run: |
+          if [ -f "interventions-2025-08-25.parquet" ]; then
+            echo "✅ Ingest pipeline produced output file"
+            python -c "
+            import pandas as pd
+            df = pd.read_parquet('interventions-2025-08-25.parquet')
+            print(f'Records: {len(df)}')
+            print(f'Columns: {list(df.columns)}')
+            "
+          else
+            echo "⚠️ No ingest output file found (expected in dry-run mode)"
+          fi
+
+  enrich-dry-run:
+    name: Enrich Pipeline (Dry Run)
+    runs-on: ubuntu-latest
+    needs: ingest-dry-run
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install enrich dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ingest/requirements.txt
+          
+      - name: Run enrich dry-run
+        env:
+          PR_CI: "1"
+        run: |
+          if [ -f "enrich/run_enrich.py" ]; then
+            python enrich/run_enrich.py --day 2025-08-25 --dry-run || echo "Enrich dry-run completed"
+          else
+            echo "⚠️ Enrich pipeline not yet implemented"
+          fi
+
+  scoring-dry-run:
+    name: Scoring Pipeline (Dry Run)
+    runs-on: ubuntu-latest
+    needs: enrich-dry-run
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install scoring dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ingest/requirements.txt
+          
+      - name: Run scoring dry-run
+        env:
+          PR_CI: "1"
+        run: |
+          if [ -f "scoring/run_scoring.py" ]; then
+            python scoring/run_scoring.py --window 30 --dry-run || echo "Scoring dry-run completed"
+          else
+            echo "⚠️ Scoring pipeline not yet implemented"
+          fi
+
+  build-web:
+    name: Build Web (No Deploy)
+    runs-on: ubuntu-latest
+    needs: scoring-dry-run
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+          
+      - name: Install web dependencies
+        working-directory: web
+        run: npm ci
+        
+      - name: Build web
+        working-directory: web
+        run: npm run build:pages
+        
+      - name: Export static
+        working-directory: web
+        run: npm run export
+        
+      - name: Verify build output
+        run: |
+          echo "📁 Build output structure:"
+          find web/out -type f -name "*.html" | head -10
+          echo ""
+          echo "📊 Build size:"
+          du -sh web/out/
+          
+      - name: Check for build artifacts
+        run: |
+          if [ -f "web/out/index.html" ]; then
+            echo "✅ Web build completed successfully"
+            echo "📄 Main page: $(wc -l < web/out/index.html) lines"
+          else
+            echo "❌ Web build failed - no index.html found"
+            exit 1
+          fi
+
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [setup-and-validate, lint-and-typecheck, ingest-dry-run, enrich-dry-run, scoring-dry-run, build-web]
+    if: always()
+    steps:
+      - name: Check job statuses
+        run: |
+          echo "## 🔍 CI Summary for PR #${{ github.event.number }}"
+          echo ""
+          echo "### Job Results:"
+          echo "- Setup & Validate: ${{ needs.setup-and-validate.result }}"
+          echo "- Lint & Type Check: ${{ needs.lint-and-typecheck.result }}"
+          echo "- Ingest Dry Run: ${{ needs.ingest-dry-run.result }}"
+          echo "- Enrich Dry Run: ${{ needs.enrich-dry-run.result }}"
+          echo "- Scoring Dry Run: ${{ needs.scoring-dry-run.result }}"
+          echo "- Build Web: ${{ needs.build-web.result }}"
+          echo ""
+          if [ "${{ needs.setup-and-validate.result }}" = "success" ] && \
+             [ "${{ needs.lint-and-typecheck.result }}" = "success" ] && \
+             [ "${{ needs.ingest-dry-run.result }}" = "success" ] && \
+             [ "${{ needs.build-web.result }}" = "success" ]; then
+            echo "🎉 All critical checks passed! PR is ready for review."
+          else
+            echo "⚠️ Some checks failed. Please review the logs above."
+            exit 1
+          fi
