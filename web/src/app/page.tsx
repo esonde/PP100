@@ -16,26 +16,30 @@ export default function Home() {
             href="/feed/" 
             className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 sm:py-1 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2 w-full sm:min-w-[200px]"
           >
-            <Image 
-              src={ASSETS.icons.feed} 
-              alt="Feed Icon" 
-              width={56} 
-              height={56}
-              className="w-14 h-14"
-            />
+            <div className="flex items-center justify-center w-14 h-14">
+              <Image 
+                src={ASSETS.icons.feed} 
+                alt="Feed Icon" 
+                width={56} 
+                height={56}
+                className="w-14 h-14"
+              />
+            </div>
             <span>Vedi Feed</span>
           </a>
           <a 
             href="/metrics/" 
             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 sm:py-1 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2 w-full sm:min-w-[200px]"
           >
-            <Image 
-              src={ASSETS.icons.dashboard} 
-              alt="Metrics Icon" 
-              width={48} 
-              height={48}
-              className="w-12 h-12"
-            />
+            <div className="flex items-center justify-center w-14 h-14">
+              <Image 
+                src={ASSETS.icons.dashboard} 
+                alt="Metrics Icon" 
+                width={48} 
+                height={48}
+                className="w-12 h-12"
+              />
+            </div>
             <span>Esplora Metriche</span>
           </a>
         </div>
