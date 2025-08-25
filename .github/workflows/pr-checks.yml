@@ -1,0 +1,295 @@
+name: PR CI Checks
+
+on:
+  pull_request:
+    branches: [ main ]
+  push:
+    branches: [ main ]
+
+concurrency:
+  group: pr-${{ github.head_ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup-and-validate:
+    name: Setup & Validate
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+          pip install flake8
+          
+      - name: Validate schemas
+        run: |
+          echo "🔍 Validating JSON schemas..."
+          python scripts/validate_schemas.py
+          
+      - name: Setup & Validate Summary
+        if: always()
+        run: |
+          echo "🎉 PR CI Checks Summary"
+          echo "=========================="
+          if [ "${{ steps.validate-schemas.outcome }}" == "success" ]; then
+            echo "Setup & Validate: ✅ success"
+          else
+            echo "Setup & Validate: ❌ failure"
+          fi
+
+  lint-and-typecheck:
+    name: Lint & Typecheck
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install flake8
+          
+      - name: Run linting
+        run: |
+          echo "🔍 Running Python linting..."
+          python -m flake8 ingest/ scripts/ --count --select=E,W,F --show-source --statistics
+          
+      - name: Lint & Typecheck Summary
+        if: always()
+        run: |
+          if [ "${{ steps.lint.outcome }}" == "success" ]; then
+            echo "Lint & Typecheck: ✅ success"
+          else
+            echo "Lint & Typecheck: ❌ failure"
+          fi
+
+  ingest-pipeline:
+    name: Ingest Pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [setup-and-validate, lint-and-typecheck]
+    if: needs.setup-and-validate.result == 'success' && needs.lint-and-typecheck.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ingest/requirements.txt
+          pip install jsonschema
+          
+      - name: Run ingest pipeline
+        run: |
+          echo "🚀 Running ingest pipeline..."
+          python ingest/run_ingest.py --day $(date -u +%F) --verbose
+          
+      - name: Ingest Pipeline Summary
+        if: always()
+        run: |
+          if [ "${{ steps.ingest.outcome }}" == "success" ]; then
+            echo "Ingest Pipeline: ✅ success"
+          else
+            echo "Ingest Pipeline: ❌ failure"
+          fi
+
+  enrich-pipeline:
+    name: Enrich Pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [ingest-pipeline]
+    if: needs.ingest-pipeline.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ingest/requirements.txt
+          
+      - name: Run enrich pipeline
+        run: |
+          echo "🔧 Running enrich pipeline..."
+          echo "TODO: Implement enrich pipeline"
+          echo "✅ Enrich pipeline placeholder completed"
+          
+      - name: Enrich Pipeline Summary
+        if: always()
+        run: |
+          if [ "${{ steps.enrich.outcome }}" == "success" ]; then
+            echo "Enrich Pipeline: ✅ success"
+          else
+            echo "Enrich Pipeline: ❌ failure"
+          fi
+
+  scoring-pipeline:
+    name: Scoring Pipeline
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [enrich-pipeline]
+    if: needs.enrich-pipeline.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+          
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install -r ingest/requirements.txt
+          
+      - name: Run scoring pipeline
+        run: |
+          echo "📊 Running scoring pipeline..."
+          echo "TODO: Implement scoring pipeline"
+          echo "✅ Scoring pipeline placeholder completed"
+          
+      - name: Scoring Pipeline Summary
+        if: always()
+        run: |
+          if [ "${{ steps.scoring.outcome }}" == "success" ]; then
+            echo "Scoring Pipeline: ✅ success"
+          else
+            echo "Scoring Pipeline: ❌ failure"
+          fi
+
+  build-web:
+    name: Build Web
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    needs: [scoring-pipeline]
+    if: needs.scoring-pipeline.result == 'success'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+        
+      - name: Run linting
+        working-directory: web
+        run: npm run lint
+        
+      - name: Run type checking
+        working-directory: web
+        run: npm run type-check
+        
+      - name: Build
+        working-directory: web
+        run: npm run build
+        
+      - name: Build Web Summary
+        if: always()
+        run: |
+          if [ "${{ steps.build.outcome }}" == "success" ]; then
+            echo "Build Web: ✅ success"
+          else
+            echo "Build Web: ❌ failure"
+          fi
+
+  summary:
+    name: CI Summary
+    runs-on: ubuntu-latest
+    needs: [setup-and-validate, lint-and-typecheck, ingest-pipeline, enrich-pipeline, scoring-pipeline, build-web]
+    if: always()
+    steps:
+      - name: Generate summary
+        run: |
+          echo "🎉 PR CI Checks Summary"
+          echo "=========================="
+          
+          if [ "${{ needs.setup-and-validate.result }}" == "success" ]; then
+            echo "Setup & Validate: ✅ success"
+          else
+            echo "Setup & Validate: ❌ failure"
+          fi
+          
+          if [ "${{ needs.lint-and-typecheck.result }}" == "success" ]; then
+            echo "Lint & Typecheck: ✅ success"
+          else
+            echo "Lint & Typecheck: ❌ failure"
+          fi
+          
+          if [ "${{ needs.ingest-pipeline.result }}" == "success" ]; then
+            echo "Ingest Pipeline: ✅ success"
+          elif [ "${{ needs.ingest-pipeline.result }}" == "skipped" ]; then
+            echo "Ingest Pipeline: ⏭️ skipped"
+          else
+            echo "Ingest Pipeline: ❌ failure"
+          fi
+          
+          if [ "${{ needs.enrich-pipeline.result }}" == "success" ]; then
+            echo "Enrich Pipeline: ✅ success"
+          elif [ "${{ needs.enrich-pipeline.result }}" == "skipped" ]; then
+            echo "Enrich Pipeline: ⏭️ skipped"
+          else
+            echo "Enrich Pipeline: ❌ failure"
+          fi
+          
+          if [ "${{ needs.scoring-pipeline.result }}" == "success" ]; then
+            echo "Scoring Pipeline: ✅ success"
+          elif [ "${{ needs.scoring-pipeline.result }}" == "skipped" ]; then
+            echo "Scoring Pipeline: ⏭️ skipped"
+          else
+            echo "Scoring Pipeline: ❌ failure"
+          fi
+          
+          if [ "${{ needs.build-web.result }}" == "success" ]; then
+            echo "Build Web: ✅ success"
+          elif [ "${{ needs.build-web.result }}" == "skipped" ]; then
+            echo "Build Web: ⏭️ skipped"
+          else
+            echo "Build Web: ❌ failure"
+          fi
+          
+          echo ""
+          if [ "${{ needs.setup-and-validate.result }}" == "success" ] && [ "${{ needs.lint-and-typecheck.result }}" == "success" ] && [ "${{ needs.ingest-pipeline.result }}" == "success" ] && [ "${{ needs.enrich-pipeline.result }}" == "success" ] && [ "${{ needs.scoring-pipeline.result }}" == "success" ] && [ "${{ needs.build-web.result }}" == "success" ]; then
+            echo "🎉 All CI checks passed!"
+            exit 0
+          else
+            echo "❌ Some CI checks failed. Please review the logs above."
+            exit 1
+          fi

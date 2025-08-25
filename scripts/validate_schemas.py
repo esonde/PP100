@@ -7,11 +7,10 @@ Fails the build if any file is invalid.
 """
 
 import json
-import os
 import sys
 from pathlib import Path
-from typing import Dict, Any, List
-from jsonschema import validate, ValidationError
+from typing import Dict, Any
+from jsonschema import ValidationError
 from jsonschema.validators import validator_for
 
 

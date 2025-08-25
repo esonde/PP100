@@ -119,7 +119,7 @@ def extract_session_date(text: str) -> Optional[datetime]:
                 logger.warning(f"Error parsing date components: {e}")
                 continue
     
-    logger.warning(f"Could not extract date from text")
+    logger.warning("Could not extract date from text")
     return None
 
 def format_timestamp_for_parquet(dt: datetime) -> str:
