@@ -93,11 +93,48 @@ def update_manifest(manifest_path: str, interventions_file: Optional[str] = None
         
         # Update fields
         from datetime import datetime
-        manifest["generated_at"] = datetime.utcnow().isoformat()
+        import hashlib
+        
+        current_time = datetime.utcnow().isoformat()
+        manifest["generated_at"] = current_time
         manifest["status"]["ingest"] = status
+        manifest["status"]["last_success"] = current_time if status == "ok" else manifest.get("status", {}).get("last_success")
         
         if interventions_file:
             manifest["current"]["interventions"] = interventions_file
+            
+            # Update files section for interventions
+            if "files" not in manifest:
+                manifest["files"] = {}
+            
+            # Calculate checksum if file exists
+            file_path = Path(manifest_path).parent / Path(interventions_file).name
+            checksum = ""
+            record_count = 0
+            
+            if file_path.exists():
+                # Calculate SHA256 checksum
+                with open(file_path, 'rb') as f:
+                    file_content = f.read()
+                    checksum = hashlib.sha256(file_content).hexdigest()
+                
+                # Count records if it's a parquet file
+                if file_path.suffix == '.parquet':
+                    try:
+                        df = pd.read_parquet(file_path)
+                        record_count = len(df)
+                    except Exception:
+                        record_count = 0
+            
+            # Update interventions file info
+            manifest["files"]["interventions"] = {
+                "filename": Path(interventions_file).name,
+                "version": manifest.get("version", "0.1.0"),
+                "generated_at": current_time,
+                "checksum": checksum,
+                "record_count": record_count,
+                "status": "active" if status == "ok" else "error"
+            }
         
         if sources:
             manifest["sources"] = sources
