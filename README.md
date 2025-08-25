@@ -1,4 +1,4 @@
-# PP100 — Parlamento Live
+# PP100 — Parlamento Live (CI Test)
 
 Monitoraggio **in tempo reale** della qualità del dibattito parlamentare italiano tramite analisi automatica degli interventi. 100% **GitHub Pages + Actions**, **zero backend**.
 
