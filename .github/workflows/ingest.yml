@@ -175,8 +175,19 @@ jobs:
       run: |
         python scripts/validate_schemas.py
         
-    - name: Build web
+    - name: Build registry and web
       run: |
+        # Install identities dependencies
+        pip install -r identities/requirements.txt
+        
+        # Build registry to ensure persons.jsonl exists for web build
+        python identities/build_registry.py
+        python identities/build_memberships.py
+        
+        # Verify files exist
+        ls -la public/data/
+        
+        # Install web dependencies and build
         cd web
         npm ci
         npm run build
