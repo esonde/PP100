@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generated_at": "2025-08-25T11:30:00Z",
+  "generated_at": "2025-08-25T11:50:00Z",
   "files": {
     "cards": {
       "filename": "cards-20250127.jsonl",
@@ -23,11 +23,25 @@
       "version": "0.1.0",
       "generated_at": "2025-08-25T08:07:15Z",
       "status": "active"
+    },
+    "persons": {
+      "filename": "persons.jsonl",
+      "version": "0.1.0",
+      "generated_at": "2025-08-25T11:50:00Z",
+      "record_count": 10,
+      "status": "active"
+    },
+    "parties": {
+      "filename": "party_registry.jsonl",
+      "version": "0.1.0",
+      "generated_at": "2025-08-25T11:50:00Z",
+      "record_count": 15,
+      "status": "active"
     }
   },
   "status": {
     "overall": "healthy",
-    "last_success": "2025-08-25T08:07:15Z",
+    "last_success": "2025-08-25T11:50:00Z",
     "degradations": [],
     "ingest": "ok"
   },

@@ -25,7 +25,8 @@ class RegistryBuilder:
     """Builds and maintains the persons registry."""
     
     def __init__(self, data_dir: str = "public/data"):
-        self.data_dir = Path(data_dir)
+        # Use absolute path to avoid relative path issues
+        self.data_dir = Path(__file__).parent.parent / data_dir
         self.data_dir.mkdir(parents=True, exist_ok=True)
         
         # File paths
@@ -114,9 +115,21 @@ class RegistryBuilder:
                 return person
         return None
     
-    def build_from_seeds(self):
+    def build_from_seeds(self, force_rebuild: bool = False):
         """Build registry from seed CSV files."""
         print("Building registry from seeds...")
+        
+        if force_rebuild:
+            print("Force rebuild: clearing existing data...")
+            self.persons.clear()
+            self.parties.clear()
+            self.xref = pd.DataFrame(columns=[
+                'person_id', 'source', 'source_id', 'url', 'first_seen', 'last_seen'
+            ])
+            self.aliases = pd.DataFrame(columns=[
+                'person_id', 'alias', 'from', 'to', 'confidence'
+            ])
+            self.inbox.clear()
         
         # Build parties first
         self._build_parties_from_seed()
@@ -131,7 +144,10 @@ class RegistryBuilder:
     
     def _build_parties_from_seed(self):
         """Build party registry from seed CSV."""
-        seed_file = Path(__file__).parent / "seeds" / "parties.csv"
+        # Try real parties first, fallback to sample
+        seed_file = Path(__file__).parent / "seeds" / "parties_real.csv"
+        if not seed_file.exists():
+            seed_file = Path(__file__).parent / "seeds" / "parties.csv"
         
         if not seed_file.exists():
             print(f"Warning: {seed_file} not found, skipping parties")
@@ -154,7 +170,10 @@ class RegistryBuilder:
     
     def _build_persons_from_seed(self):
         """Build persons registry from seed CSV."""
-        seed_file = Path(__file__).parent / "seeds" / "persons_sample.csv"
+        # Try real persons first, fallback to sample
+        seed_file = Path(__file__).parent / "seeds" / "persons_real.csv"
+        if not seed_file.exists():
+            seed_file = Path(__file__).parent / "seeds" / "persons_sample.csv"
         
         if not seed_file.exists():
             print(f"Warning: {seed_file} not found, skipping persons")
@@ -291,6 +310,15 @@ class RegistryBuilder:
                 f.write('\n')
         
         print(f"Data saved to {self.data_dir}")
+        
+        # Verify the file was written
+        if self.persons_file.exists():
+            with open(self.persons_file, 'r', encoding='utf-8') as f:
+                lines = f.readlines()
+                if lines:
+                    print(f"First line: {lines[0][:100]}...")
+        else:
+            print("persons.jsonl file was not created!")
 
 
 def main():
