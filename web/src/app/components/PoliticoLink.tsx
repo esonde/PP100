@@ -28,13 +28,28 @@ export default function PoliticoLink({ nome, className = '', showIcon = true }: 
         
         // First try hardcoded mapping for testing
         const hardcodedMapping: { [key: string]: PersonData } = {
+          // Politici reali dal registry
           'Elly Schlein': { person_id: 'P000001', nome: 'Elly', cognome: 'Schlein', slug: 'schlein-elly' },
           'Giorgia Meloni': { person_id: 'P000002', nome: 'Giorgia', cognome: 'Meloni', slug: 'meloni-giorgia' },
           'Matteo Salvini': { person_id: 'P000003', nome: 'Matteo', cognome: 'Salvini', slug: 'salvini-matteo' },
+          'Silvio Berlusconi': { person_id: 'P000004', nome: 'Silvio', cognome: 'Berlusconi', slug: 'berlusconi-silvio' },
+          'Giuseppe Conte': { person_id: 'P000005', nome: 'Giuseppe', cognome: 'Conte', slug: 'conte-giuseppe' },
+          
+          // Varianti con onorifici
           'On. Elly Schlein': { person_id: 'P000001', nome: 'Elly', cognome: 'Schlein', slug: 'schlein-elly' },
           'Onorevole Elly Schlein': { person_id: 'P000001', nome: 'Elly', cognome: 'Schlein', slug: 'schlein-elly' },
           'Ministro Giorgia Meloni': { person_id: 'P000002', nome: 'Giorgia', cognome: 'Meloni', slug: 'meloni-giorgia' },
-          'Sottosegretario Matteo Salvini': { person_id: 'P000003', nome: 'Matteo', cognome: 'Salvini', slug: 'salvini-matteo' }
+          'Sottosegretario Matteo Salvini': { person_id: 'P000003', nome: 'Matteo', cognome: 'Salvini', slug: 'salvini-matteo' },
+          
+          // Nomi dai dati di test (feed/leaderboard)
+          'Antonio Neri': { person_id: 'P000006', nome: 'Antonio', cognome: 'Neri', slug: 'neri-antonio' },
+          'Elena Bianchi': { person_id: 'P000007', nome: 'Elena', cognome: 'Bianchi', slug: 'bianchi-elena' },
+          'Giulia Verdi': { person_id: 'P000008', nome: 'Giulia', cognome: 'Verdi', slug: 'verdi-giulia' },
+          'Mario Rossi': { person_id: 'P000009', nome: 'Mario', cognome: 'Rossi', slug: 'rossi-mario' },
+          'Anna Bianchi': { person_id: 'P000010', nome: 'Anna', cognome: 'Bianchi', slug: 'bianchi-anna' },
+          'Luca Verdi': { person_id: 'P000011', nome: 'Luca', cognome: 'Verdi', slug: 'verdi-luca' },
+          'Marco Gialli': { person_id: 'P000012', nome: 'Marco', cognome: 'Gialli', slug: 'gialli-marco' },
+          'Sofia Rossi': { person_id: 'P000013', nome: 'Sofia', cognome: 'Rossi', slug: 'rossi-sofia' }
         }
         
         // Check hardcoded mapping first

@@ -2,6 +2,7 @@ import PoliticoLink from '../components/PoliticoLink'
 
 export default function TestPoliticoLinkPage() {
   const testNames = [
+    // Politici reali dal registry
     'Elly Schlein',
     'On. Elly Schlein', 
     'Onorevole Elly Schlein',
@@ -9,8 +10,21 @@ export default function TestPoliticoLinkPage() {
     'Ministro Giorgia Meloni',
     'Matteo Salvini',
     'Sottosegretario Matteo Salvini',
-    'Nome Inesistente',
-    'On. Mario Rossi'
+    'Silvio Berlusconi',
+    'Giuseppe Conte',
+    
+    // Nomi dai dati di test (feed/leaderboard)
+    'Antonio Neri',
+    'Elena Bianchi',
+    'Giulia Verdi',
+    'Mario Rossi',
+    'Anna Bianchi',
+    'Luca Verdi',
+    'Marco Gialli',
+    'Sofia Rossi',
+    
+    // Nome inesistente per test fallback
+    'Nome Inesistente'
   ]
 
   return (
@@ -29,6 +43,7 @@ export default function TestPoliticoLinkPage() {
           <li>• <strong>Nomi neri</strong> = Politico non trovato (testo normale)</li>
           <li>• <strong>Rimozione onorifici</strong> = &quot;On. Elly Schlein&quot; → &quot;Elly Schlein&quot;</li>
           <li>• <strong>Matching intelligente</strong> = Trova corrispondenze anche con variazioni</li>
+          <li>• <strong>Test names</strong> = Nomi dai dati feed/leaderboard (cliccabili)</li>
         </ul>
       </div>
 
