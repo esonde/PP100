@@ -67,3 +67,4 @@ public/data/scores-*.json
 # Ingest generated files
 ingest/public/data/
 ingest/__pycache__/
+

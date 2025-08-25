@@ -89,7 +89,10 @@ def get_schema_mapping() -> Dict[str, str]:
     return {
         'manifest': 'manifest.schema.json',
         'cards': 'cards.schema.json',
-        'scores-rolling': 'scores-rolling.schema.json'
+        'scores-rolling': 'scores-rolling.schema.json',
+        'persons': 'persons.schema.json',
+        'party_registry': 'party_registry.schema.json',
+        'identities_inbox': 'identities_inbox.schema.json'
     }
 
 

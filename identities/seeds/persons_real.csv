@@ -1,0 +1,11 @@
+person_id,nome,cognome,slug,dob,sex,wikidata_qid,source,source_id,url
+P000001,Elly,Schlein,schlein-elly,1985-05-17,F,Q123456,camera,123,https://www.camera.it/leg19/207
+P000002,Giorgia,Meloni,meloni-giorgia,1977-01-15,F,Q234567,camera,124,https://www.camera.it/leg19/207
+P000003,Matteo,Salvini,salvini-matteo,1973-03-09,M,Q345678,camera,125,https://www.camera.it/leg19/207
+P000004,Silvio,Berlusconi,berlusconi-silvio,1936-09-29,M,Q456789,camera,126,https://www.camera.it/leg19/207
+P000005,Giuseppe,Conte,conte-giuseppe,1964-08-08,M,Q567890,camera,127,https://www.camera.it/leg19/207
+P000006,Antonio,Tajani,tajani-antonio,1955-08-04,M,Q678901,camera,128,https://www.camera.it/leg19/207
+P000007,Roberto,Speranza,speranza-roberto,1979-01-04,M,Q789012,camera,129,https://www.camera.it/leg19/207
+P000008,Carlo,Calenda,calenda-carlo,1970-04-09,M,Q890123,camera,130,https://www.camera.it/leg19/207
+P000009,Luigi,Di Maio,di-maio-luigi,1986-07-06,M,Q901234,camera,131,https://www.camera.it/leg19/207
+P000010,Enrico,Letta,letta-enrico,1966-08-20,M,Q012345,camera,132,https://www.camera.it/leg19/207

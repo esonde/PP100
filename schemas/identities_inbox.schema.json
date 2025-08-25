@@ -1,0 +1,59 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Identities Inbox",
+  "description": "Temporary storage for unmapped identities found during ingest",
+  "type": "object",
+  "properties": {
+    "source_id": {
+      "type": "string",
+      "description": "Original identifier from source system"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["camera", "senato", "manual"],
+      "description": "Source system where identity was found"
+    },
+    "raw_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Raw name as found in source"
+    },
+    "normalized_name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Normalized name after basic cleaning"
+    },
+    "context": {
+      "type": "string",
+      "description": "Additional context (e.g., party, role, date)"
+    },
+    "first_seen": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this identity was first encountered"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this identity was last seen"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score for the normalization (0-1)"
+    },
+    "status": {
+      "type": "string",
+      "enum": ["pending", "reviewed", "mapped", "ignored"],
+      "default": "pending",
+      "description": "Current processing status"
+    },
+    "notes": {
+      "type": "string",
+      "description": "Manual notes or observations"
+    }
+  },
+  "required": ["source_id", "source", "raw_name", "normalized_name", "first_seen"],
+  "additionalProperties": false
+}

@@ -38,13 +38,14 @@ def setup_logging(verbose: bool = False) -> None:
         ]
     )
 
-def run_ingest(day: str, verbose: bool = False) -> bool:
+def run_ingest(day: str, verbose: bool = False, dry_run: bool = False) -> bool:
     """
     Run the complete ingest pipeline
     
     Args:
         day: Date string in YYYY-MM-DD format
         verbose: Enable verbose logging
+        dry_run: Run in dry-run mode (no file writing, no manifest updates)
         
     Returns:
         True if successful, False otherwise
@@ -133,6 +134,11 @@ def run_ingest(day: str, verbose: bool = False) -> bool:
         output_filename = f"interventions-{day}.parquet"
         output_path = data_dir / output_filename
         
+        if dry_run:
+            logger.info(f"Dry-run mode: Would write {len(all_interventions)} interventions to {output_filename}")
+            logger.info("Dry-run mode: manifest not updated")
+            return True
+        
         try:
             # Convert to DataFrame
             df = pd.DataFrame(all_interventions)
@@ -161,7 +167,10 @@ def run_ingest(day: str, verbose: bool = False) -> bool:
     else:
         logger.info("No valid interventions to write")
         # Update manifest with no data status
-        update_manifest(str(manifest_path), status="no_data")
+        if not dry_run:
+            update_manifest(str(manifest_path), status="no_data")
+        else:
+            logger.info("Dry-run mode: manifest not updated")
         return True
 
 def process_source(adapter, session, manifest: Dict, source_name: str) -> List[Dict]:
@@ -227,6 +236,11 @@ def main():
         action="store_true",
         help="Enable verbose logging"
     )
+    parser.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="Run in dry-run mode (no file writing, no manifest updates)"
+    )
     
     args = parser.parse_args()
     
@@ -241,7 +255,7 @@ def main():
     setup_logging(args.verbose)
     
     # Run ingest
-    success = run_ingest(args.day, args.verbose)
+    success = run_ingest(args.day, args.verbose, args.dry_run)
     
     if success:
         print("Ingest pipeline completed")
