@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ManifestData, getInterventionsInfo, formatDate } from '../utils/data'
+import { ManifestData, getInterventionsInfo, formatDate, readParquetData } from '../utils/data'
 
 export default function InterventiPage() {
   const [manifestData, setManifestData] = useState<ManifestData | null>(null)
@@ -12,6 +12,7 @@ export default function InterventiPage() {
     source: 'parquet' | 'json' | 'none'
     downloadUrl: string
   } | null>(null)
+  const [interventionsData, setInterventionsData] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -26,10 +27,21 @@ export default function InterventiPage() {
         const manifest = await manifestResponse.json()
         setManifestData(manifest)
         
-        const interventionsInfo = await getInterventionsInfo(manifest)
-        setInterventionsInfo(interventionsInfo)
-        
-        setLoading(false)
+                        const interventionsInfo = await getInterventionsInfo(manifest)
+                setInterventionsInfo(interventionsInfo)
+                
+                // Se abbiamo un file Parquet, carica i dati
+                if (interventionsInfo?.source === 'parquet' && interventionsInfo.downloadUrl) {
+                  try {
+                    const data = await readParquetData(interventionsInfo.downloadUrl, 20) // Primi 20 interventi
+                    setInterventionsData(data)
+                  } catch (err) {
+                    console.warn('Failed to load Parquet data:', err)
+                    setInterventionsData([])
+                  }
+                }
+                
+                setLoading(false)
       } catch (err) {
         setError(err instanceof Error ? err.message : 'Unknown error')
         setLoading(false)
@@ -130,17 +142,84 @@ export default function InterventiPage() {
                     {interventionsInfo.filename}
                   </code>
                 )}{' '}
-                ma non possono essere visualizzati direttamente nel browser.
+                e ora sono visualizzabili direttamente nella pagina!
               </p>
               <p className="text-blue-800 text-sm">
-                <strong>Prossimo step:</strong> Implementare pipeline di conversione Parquet → JSON 
-                per visualizzazione web (M2 - Style & Topics).
-              </p>
-              <p className="text-blue-800 text-sm mt-2">
-                <strong>Nota:</strong> Questa pagina mostra lo <em>stato operativo</em> della pipeline. 
-                Per la <em>visualizzazione semantica</em> degli interventi, consulta la pagina <strong>Feed</strong> (disponibile da M2).
+                <strong>Funzionalità:</strong> Lettura diretta file Parquet nel browser tramite WebAssembly.
               </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Interventi Data */}
+      {interventionsData.length > 0 && (
+        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h3 className="text-lg font-semibold text-gray-900">
+              Ultimi {interventionsData.length} Interventi
+            </h3>
+            <span className="text-sm text-gray-500">
+              Dati letti direttamente dal file Parquet
+            </span>
+          </div>
+          
+          <div className="space-y-4">
+            {interventionsData.map((intervention, index) => (
+              <div key={index} className="border border-gray-200 rounded-lg p-4 hover:bg-gray-50">
+                <div className="flex items-start justify-between mb-2">
+                  <div className="flex items-center space-x-3">
+                    <span className="text-sm font-medium text-gray-900">
+                      {intervention.oratore || 'Oratore sconosciuto'}
+                    </span>
+                    <span className="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                      {intervention.gruppo || 'Gruppo N/A'}
+                    </span>
+                  </div>
+                  <div className="text-xs text-gray-500">
+                    {intervention.ts_start ? formatDate(intervention.ts_start) : 'Data N/A'}
+                  </div>
+                </div>
+                
+                <div className="mb-2">
+                  <span className="text-xs text-gray-600">
+                    Fonte: {intervention.source || 'N/A'} • Seduta: {intervention.seduta || 'N/A'}
+                  </span>
+                </div>
+                
+                <div className="text-sm text-gray-800 leading-relaxed">
+                  {intervention.text ? (
+                    intervention.text.length > 200 ? (
+                      <>
+                        {intervention.text.substring(0, 200)}...
+                        <span className="text-blue-600 text-xs ml-2">
+                          ({intervention.text.length} caratteri)
+                        </span>
+                      </>
+                    ) : (
+                      intervention.text
+                    )
+                  ) : (
+                    <span className="text-gray-400 italic">Testo non disponibile</span>
+                  )}
+                </div>
+                
+                {intervention.spans_frasi && intervention.spans_frasi.length > 0 && (
+                  <div className="mt-2 text-xs text-gray-500">
+                    <span className="font-medium">Spans frasi:</span> {intervention.spans_frasi.length} segmenti
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+          
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-600">
+              Mostrando i primi {interventionsData.length} interventi su {interventionsInfo?.count || '?'} totali
+            </p>
+            <p className="text-xs text-gray-500 mt-1">
+              Per scaricare tutti i dati, clicca sul nome del file sopra
+            </p>
           </div>
         </div>
       )}

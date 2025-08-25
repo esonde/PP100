@@ -129,6 +129,75 @@ export async function countJsonlRecords(url: string): Promise<number> {
   }
 }
 
+// Funzione per contare i record di un file Parquet
+export async function countParquetRecords(url: string): Promise<number> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) return 0
+    
+    const arrayBuffer = await response.arrayBuffer()
+    const parquetUint8Array = new Uint8Array(arrayBuffer)
+    
+    const initWasm = (await import('parquet-wasm')).default
+    const { readParquet } = await import('parquet-wasm')
+    const { tableFromIPC } = await import('apache-arrow')
+    
+    // Inizializza WASM
+    await initWasm()
+    
+    // Leggi il file Parquet
+    const arrowWasmTable = readParquet(parquetUint8Array)
+    const arrowTable = tableFromIPC(arrowWasmTable.intoIPCStream())
+    
+    return arrowTable.numRows
+  } catch (error) {
+    console.error('Error reading Parquet file:', error)
+    return 0
+  }
+}
+
+// Funzione per leggere i dati di un file Parquet
+export async function readParquetData(url: string, limit: number = 50): Promise<any[]> {
+  try {
+    const response = await fetch(url)
+    if (!response.ok) return []
+    
+    const arrayBuffer = await response.arrayBuffer()
+    const parquetUint8Array = new Uint8Array(arrayBuffer)
+    
+    const initWasm = (await import('parquet-wasm')).default
+    const { readParquet } = await import('parquet-wasm')
+    const { tableFromIPC } = await import('apache-arrow')
+    
+    // Inizializza WASM
+    await initWasm()
+    
+    // Leggi il file Parquet
+    const arrowWasmTable = readParquet(parquetUint8Array)
+    const arrowTable = tableFromIPC(arrowWasmTable.intoIPCStream())
+    
+    // Converti in array di oggetti
+    const rows: any[] = []
+    const rowCount = Math.min(arrowTable.numRows, limit)
+    
+    for (let i = 0; i < rowCount; i++) {
+      const row: any = {}
+      arrowTable.schema.fields.forEach((field: any) => {
+        const column = arrowTable.getChild(field.name)
+        if (column) {
+          row[field.name] = column.get(i)
+        }
+      })
+      rows.push(row)
+    }
+    
+    return rows
+  } catch (error) {
+    console.error('Error reading Parquet file:', error)
+    return []
+  }
+}
+
 // Funzione per leggere dati JSONL
 export async function readJsonlData<T>(url: string): Promise<T[]> {
   try {
@@ -209,15 +278,25 @@ export async function getInterventionsInfo(manifest: ManifestData): Promise<{
   const lastUpdate = manifest.generated_at
   const downloadUrl = `/data/${filename}`
   
-  // Per ora, se il file è parquet, non possiamo leggerlo nel browser
-  // Ma possiamo mostrare che esiste e permettere il download
+  // Se è parquet, proviamo a leggerlo per ottenere il count
   if (filename.endsWith('.parquet')) {
-    return {
-      count: -1, // -1 significa "file esiste ma count sconosciuto"
-      filename,
-      lastUpdate: formatDate(lastUpdate),
-      source: 'parquet',
-      downloadUrl
+    try {
+      const count = await countParquetRecords(`/data/${filename}`)
+      return {
+        count,
+        filename,
+        lastUpdate: formatDate(lastUpdate),
+        source: 'parquet',
+        downloadUrl
+      }
+    } catch {
+      return {
+        count: -1, // -1 significa "file esiste ma count sconosciuto"
+        filename,
+        lastUpdate: formatDate(lastUpdate),
+        source: 'parquet',
+        downloadUrl
+      }
     }
   }
   
