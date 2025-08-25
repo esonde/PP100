@@ -30,6 +30,7 @@ export default function RootLayout({
                 <li><a href="/" className="hover:text-blue-200 transition-colors font-medium">🏠 Home</a></li>
                 <li><a href="/feed/" className="hover:text-blue-200 transition-colors font-medium">📰 Feed</a></li>
                 <li><a href="/metrics/" className="hover:text-blue-200 transition-colors font-medium">📊 Metriche</a></li>
+                <li><a href="/interventi/" className="hover:text-blue-200 transition-colors font-medium">🏛️ Interventi Live</a></li>
                 <li><a href="/leaderboard/" className="hover:text-blue-200 transition-colors font-medium">🏆 Leaderboard</a></li>
               </ul>
             </nav>
