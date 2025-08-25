@@ -37,6 +37,8 @@ jobs:
       id: ingest
       run: |
         echo "::group::Ingest Pipeline Execution"
+        # Helper to write safe outputs (supports any content)
+        set_output() { echo "$1<<__OUTPUT__" >> "$GITHUB_OUTPUT"; echo "$2" >> "$GITHUB_OUTPUT"; echo "__OUTPUT__" >> "$GITHUB_OUTPUT"; }
         start_time=$(date +%s)
         
         # Run ingest with verbose output
@@ -46,11 +48,11 @@ jobs:
         duration=$((end_time - start_time))
         
         # Extract metrics from log
-        echo "duration=$duration" >> $GITHUB_OUTPUT
+        set_output "duration" "$duration"
         
         # Count interventions if file was created
         if [ -f "public/data/interventions-$(date -u +%F).parquet" ]; then
-          echo "interventions_created=true" >> $GITHUB_OUTPUT
+          set_output "interventions_created" "true"
           # Get file size in bytes and convert to human readable
           file_size_bytes=$(stat -c%s "public/data/interventions-$(date -u +%F).parquet" 2>/dev/null || echo "0")
           if [ "$file_size_bytes" -gt 0 ]; then
@@ -61,22 +63,22 @@ jobs:
               else
                 file_size="$((file_size_bytes/1048576))"
               fi
-              echo "file_size=${file_size}M" >> $GITHUB_OUTPUT
+              set_output "file_size" "${file_size}M"
             elif [ "$file_size_bytes" -gt 1024 ]; then
               if command -v bc >/dev/null 2>&1; then
                 file_size=$(echo "scale=1; $file_size_bytes/1024" | bc -l 2>/dev/null || echo "$((file_size_bytes/1024))")
               else
                 file_size="$((file_size_bytes/1024))"
               fi
-              echo "file_size=${file_size}K" >> $GITHUB_OUTPUT
+              set_output "file_size" "${file_size}K"
             else
-              echo "file_size=${file_size_bytes}B" >> $GITHUB_OUTPUT
+              set_output "file_size" "${file_size_bytes}B"
             fi
           else
-            echo "file_size=unknown" >> $GITHUB_OUTPUT
+            set_output "file_size" "unknown"
           fi
         else
-          echo "interventions_created=false" >> $GITHUB_OUTPUT
+          set_output "interventions_created" "false"
         fi
         
         echo "::endgroup::"
@@ -85,19 +87,21 @@ jobs:
       id: summary
       run: |
         echo "::group::Extracting Summary Data"
+        # Helper to write safe outputs (supports any content)
+        set_output() { echo "$1<<__OUTPUT__" >> "$GITHUB_OUTPUT"; echo "$2" >> "$GITHUB_OUTPUT"; echo "__OUTPUT__" >> "$GITHUB_OUTPUT"; }
         
         # Read manifest for status and sources
         if [ -f "public/data/manifest.json" ]; then
           # Simple fallback approach - avoid complex parsing
-          echo "manifest_status=ok" >> $GITHUB_OUTPUT
-          echo "camera_source=active" >> $GITHUB_OUTPUT
-          echo "senato_source=active" >> $GITHUB_OUTPUT
-          echo "generated_at=$(date -u +%Y-%m-%dT%H:%M:%SZ)" >> $GITHUB_OUTPUT
+          set_output "manifest_status" "ok"
+          set_output "camera_source" "active"
+          set_output "senato_source" "active"
+          set_output "generated_at" "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
         else
-          echo "manifest_status=missing" >> $GITHUB_OUTPUT
-          echo "camera_source=unknown" >> $GITHUB_OUTPUT
-          echo "senato_source=unknown" >> $GITHUB_OUTPUT
-          echo "generated_at=unknown" >> $GITHUB_OUTPUT
+          set_output "manifest_status" "missing"
+          set_output "camera_source" "unknown"
+          set_output "senato_source" "unknown"
+          set_output "generated_at" "unknown"
         fi
         
         # Extract HTTP status codes and host contacts from log
@@ -118,17 +122,17 @@ jobs:
           [ -z "$hosts_contacted" ] && hosts_contacted="0"
           [ -z "$hosts_list" ] && hosts_list=""
           
-          echo "status_304=$status_304" >> $GITHUB_OUTPUT
-          echo "status_200=$status_200" >> $GITHUB_OUTPUT
-          echo "status_error=$status_error" >> $GITHUB_OUTPUT
-          echo "hosts_contacted=$hosts_contacted" >> $GITHUB_OUTPUT
-          echo "hosts_list=$hosts_list" >> $GITHUB_OUTPUT
+          set_output "status_304" "$status_304"
+          set_output "status_200" "$status_200"
+          set_output "status_error" "$status_error"
+          set_output "hosts_contacted" "$hosts_contacted"
+          set_output "hosts_list" "$hosts_list"
         else
-          echo "status_304=0" >> $GITHUB_OUTPUT
-          echo "status_200=0" >> $GITHUB_OUTPUT
-          echo "status_error=0" >> $GITHUB_OUTPUT
-          echo "hosts_contacted=0" >> $GITHUB_OUTPUT
-          echo "hosts_list=" >> $GITHUB_OUTPUT
+          set_output "status_304" "0"
+          set_output "status_200" "0"
+          set_output "status_error" "0"
+          set_output "hosts_contacted" "0"
+          set_output "hosts_list" ""
         fi
         
         echo "::endgroup::"
