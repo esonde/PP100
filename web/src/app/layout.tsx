@@ -9,7 +9,7 @@ export const metadata: Metadata = {
   title: 'PP100 - Parlamento Live',
   description: 'Monitoraggio in tempo reale della qualità del dibattito parlamentare italiano',
   icons: {
-    icon: '/PP100/images/favicon/favicon.ico',
+    icon: '/images/favicon/favicon.ico',
   },
   // Force new deployment to ensure all assets are properly served
 }

@@ -23,6 +23,7 @@ export default function Home() {
               height={24}
               className="w-6 h-6"
             />
+            <span className="text-xl">📰</span>
             <span>Vedi Feed</span>
           </a>
           <a 
@@ -36,6 +37,7 @@ export default function Home() {
               height={24}
               className="w-6 h-6"
             />
+            <span className="text-xl">📊</span>
             <span>Esplora Metriche</span>
           </a>
         </div>
@@ -52,6 +54,7 @@ export default function Home() {
                 height={24}
                 className="w-6 h-6"
               />
+              <span className="text-2xl">🎯</span>
             </div>
             <h2 className="text-2xl font-semibold text-gray-900">Obiettivo</h2>
           </div>
@@ -72,6 +75,7 @@ export default function Home() {
                 height={24}
                 className="w-6 h-6"
               />
+              <span className="text-2xl">🔍</span>
             </div>
             <h2 className="text-2xl font-semibold text-gray-900">Cosa Monitoriamo</h2>
           </div>
@@ -95,6 +99,7 @@ export default function Home() {
               height={24}
               className="w-6 h-6"
             />
+            <span className="text-2xl">📈</span>
           </div>
           <h2 className="text-2xl font-semibold text-gray-900">Punteggio PP (Punti Politico)</h2>
         </div>
