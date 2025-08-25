@@ -104,13 +104,13 @@ jobs:
           
       - name: Build and export
         working-directory: web
-        run: npm run export
+        run: npm run build
         
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: web-build
-          path: web/out/
+          path: web/.next/
           retention-days: 1
 
   deploy-pages:
@@ -136,7 +136,7 @@ jobs:
       - name: Upload to Pages
         uses: actions/upload-pages-artifact@v3
         with:
-          path: web/out/
+          path: web/.next/
           
       - name: Deploy to Pages
         id: deployment
