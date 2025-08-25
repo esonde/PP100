@@ -3,7 +3,7 @@ name: Ingest Pipeline
 on:
   workflow_dispatch:  # Manual trigger
   schedule:
-    - cron: '*/5 * * * *'  # Every 5 minutes
+    - cron: '*/10 * * * *'  # Every 10 minutes
   push:
     branches: [ main ]
     paths:
@@ -43,10 +43,28 @@ jobs:
       id: ingest
       run: |
         echo "::group::Ingest Pipeline Execution"
+        echo "Starting ingest pipeline at $(date -u)"
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        
         # Helper to write safe outputs (supports any content)
         set_output() { echo "$1<<__OUTPUT__" >> "$GITHUB_OUTPUT"; echo "$2" >> "$GITHUB_OUTPUT"; echo "__OUTPUT__" >> "$GITHUB_OUTPUT"; }
         start_time=$(date +%s)
         
+        # Check if ingest directory exists
+        if [ ! -d "ingest" ]; then
+          echo "ERROR: ingest directory not found!"
+          exit 1
+        fi
+        
+        # Check if run_ingest.py exists
+        if [ ! -f "ingest/run_ingest.py" ]; then
+          echo "ERROR: ingest/run_ingest.py not found!"
+          exit 1
+        fi
+        
+        echo "Running ingest pipeline..."
         # Run ingest with verbose output
         python ingest/run_ingest.py --day $(date -u +%F) --verbose 2>&1 | tee ingest.log
         
