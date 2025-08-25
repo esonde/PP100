@@ -59,7 +59,7 @@ def validate_all_schemas() -> bool:
         if validate_schema_file(schema_file):
             success_count += 1
     
-    print(f"\n📊 Validation Results:")
+    print("\n📊 Validation Results:")
     print(f"✅ Passed: {success_count}")
     print(f"❌ Failed: {total_count - success_count}")
     print(f"📁 Total: {total_count}")

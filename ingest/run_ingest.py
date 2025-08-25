@@ -9,7 +9,7 @@ import logging
 import sys
 from datetime import datetime, date
 from pathlib import Path
-from typing import List, Dict, Optional
+from typing import List, Dict
 import pandas as pd
 
 # Add parent directory to path for imports

@@ -9,8 +9,6 @@ import tempfile
 from pathlib import Path
 from typing import Dict, Any, Optional
 import pandas as pd
-import pyarrow as pa
-import pyarrow.parquet as pq
 
 def safe_write_parquet(df: pd.DataFrame, output_path: str) -> bool:
     """

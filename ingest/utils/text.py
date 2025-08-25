@@ -1,6 +1,6 @@
 """Text utilities for sentence splitting and span management."""
 import re
-from typing import List, Tuple, Optional
+from typing import List, Tuple
 import logging
 
 logger = logging.getLogger(__name__)
