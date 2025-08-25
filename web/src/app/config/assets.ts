@@ -1,7 +1,7 @@
 // Asset configuration for PP100
 export const ASSETS = {
   logo: {
-    primary: './images/logo/pp100-logo.svg',
+    primary: './images/logo/pp100-logo.png',
     fallback: './images/logo/pp100-logo.png',
     favicon: './images/favicon/favicon.ico'
   },

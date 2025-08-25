@@ -19,11 +19,10 @@ export default function Home() {
             <Image 
               src={ASSETS.icons.feed} 
               alt="Feed Icon" 
-              width={24} 
-              height={24}
-              className="w-6 h-6"
+              width={48} 
+              height={48}
+              className="w-12 h-12"
             />
-            <span className="text-xl">📰</span>
             <span>Vedi Feed</span>
           </a>
           <a 
@@ -33,11 +32,10 @@ export default function Home() {
             <Image 
               src={ASSETS.icons.dashboard} 
               alt="Metrics Icon" 
-              width={24} 
-              height={24}
-              className="w-6 h-6"
+              width={48} 
+              height={48}
+              className="w-12 h-12"
             />
-            <span className="text-xl">📊</span>
             <span>Esplora Metriche</span>
           </a>
         </div>
@@ -50,11 +48,10 @@ export default function Home() {
               <Image 
                 src={ASSETS.icons.parliament} 
                 alt="Objective Icon" 
-                width={24} 
-                height={24}
-                className="w-6 h-6"
+                width={48} 
+                height={48}
+                className="w-12 h-12"
               />
-              <span className="text-2xl">🎯</span>
             </div>
             <h2 className="text-2xl font-semibold text-gray-900">Obiettivo</h2>
           </div>
@@ -71,11 +68,10 @@ export default function Home() {
               <Image 
                 src={ASSETS.icons.monitoring} 
                 alt="Monitoring Icon" 
-                width={24} 
-                height={24}
-                className="w-6 h-6"
+                width={48} 
+                height={48}
+                className="w-12 h-12"
               />
-              <span className="text-2xl">🔍</span>
             </div>
             <h2 className="text-2xl font-semibold text-gray-900">Cosa Monitoriamo</h2>
           </div>
@@ -90,19 +86,18 @@ export default function Home() {
       </div>
 
       <div className="card">
-        <div className="flex items-center space-x-3 mb-4">
-          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-            <Image 
-              src={ASSETS.icons.dashboard} 
-              alt="Metrics Icon" 
-              width={24} 
-              height={24}
-              className="w-6 h-6"
-            />
-            <span className="text-2xl">📈</span>
+                  <div className="flex items-center space-x-3 mb-4">
+            <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+              <Image 
+                src={ASSETS.icons.dashboard} 
+                alt="Metrics Icon" 
+                width={48} 
+                height={48}
+                className="w-12 h-12"
+              />
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900">Punteggio PP (Punti Politico)</h2>
           </div>
-          <h2 className="text-2xl font-semibold text-gray-900">Punteggio PP (Punti Politico)</h2>
-        </div>
         <p className="text-gray-600 mb-4">
           Il sistema calcola un punteggio da 0 a 100 per ogni parlamentare basato su:
         </p>

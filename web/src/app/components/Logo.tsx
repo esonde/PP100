@@ -21,7 +21,7 @@ export default function Logo({ size = 'md', showText = true }: LogoProps) {
 
   return (
     <div className="flex items-center space-x-3">
-      {/* Logo - using generated asset with emoji fallback */}
+      {/* Logo - using generated asset */}
       <div className={`${sizeClasses[size]} bg-white rounded-lg flex items-center justify-center shadow-md overflow-hidden`}>
         <Image 
           src={ASSETS.logo.primary} 
@@ -30,8 +30,6 @@ export default function Logo({ size = 'md', showText = true }: LogoProps) {
           height={64}
           className="w-full h-full object-contain"
         />
-        {/* Emoji fallback - will show if image fails */}
-        <span className={`${textSizes[size]} font-bold text-blue-800`}>PP</span>
       </div>
       
       {showText && (

@@ -43,7 +43,7 @@ export default function MetricsPage() {
   useEffect(() => {
     const fetchScores = async () => {
       try {
-        const response = await fetch('/PP100/data/scores-rolling-20250127.json')
+        const response = await fetch('/data/scores-rolling-20250127.json')
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }
