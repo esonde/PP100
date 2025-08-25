@@ -243,11 +243,10 @@ jobs:
         path: web/out
         retention-days: 1
         
-    # Deploy temporarily disabled until GitHub Pages is configured
-    # - name: Deploy to Pages
-    #   uses: actions/deploy-pages@v4
-    #   environment:
-    #     name: github-pages
-    #   with:
-    #     path: web/out
-    #   if: success()
+    - name: Deploy to Pages
+      uses: actions/deploy-pages@v4
+      environment:
+        name: github-pages
+      with:
+        path: web/out
+      if: success()
