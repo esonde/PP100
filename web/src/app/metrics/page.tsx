@@ -17,6 +17,7 @@ export default function MetricsPage() {
     filename: string
     lastUpdate: string
     source: 'parquet' | 'json' | 'none'
+    downloadUrl: string
   } | null>(null)
   const [registryStats, setRegistryStats] = useState<{
     personsCount: number
@@ -24,6 +25,11 @@ export default function MetricsPage() {
     inboxCount: number
     persons: any[]
     parties: any[]
+    downloadUrls: {
+      persons: string
+      parties: string
+      inbox: string
+    }
   } | null>(null)
   const [nextUpdate, setNextUpdate] = useState<{
     nextUpdate: string
@@ -96,7 +102,18 @@ export default function MetricsPage() {
             <h3 className="text-lg font-semibold text-gray-900">Interventi Oggi</h3>
             <p className={`text-2xl font-bold ${statusColor}`}>{statusText}</p>
             <p className="text-sm text-gray-600 mt-1">
-              File: {interventionsInfo.filename}
+              File: {interventionsInfo.downloadUrl ? (
+                <a 
+                  href={interventionsInfo.downloadUrl} 
+                  download={interventionsInfo.filename}
+                  className="text-blue-600 hover:text-blue-800 underline hover:no-underline"
+                  title={`Scarica ${interventionsInfo.filename}`}
+                >
+                  {interventionsInfo.filename}
+                </a>
+              ) : (
+                interventionsInfo.filename
+              )}
             </p>
             <p className="text-sm text-gray-500 mt-1">
               Ultimo aggiornamento: {interventionsInfo.lastUpdate}
@@ -216,6 +233,34 @@ export default function MetricsPage() {
                   <p className="text-sm text-gray-600 mt-1">
                     {registryStats.partiesCount} partiti • {registryStats.inboxCount} in inbox
                   </p>
+                  <div className="mt-3 space-y-1">
+                    <div className="text-xs text-gray-500">
+                      <a 
+                        href={registryStats.downloadUrls.persons} 
+                        download="persons.jsonl"
+                        className="text-blue-600 hover:text-blue-800 underline hover:no-underline mr-3"
+                        title="Scarica persone"
+                      >
+                        📥 persons.jsonl
+                      </a>
+                      <a 
+                        href={registryStats.downloadUrls.parties} 
+                        download="party_registry.jsonl"
+                        className="text-blue-600 hover:text-blue-800 underline hover:no-underline mr-3"
+                        title="Scarica partiti"
+                      >
+                        📥 party_registry.jsonl
+                      </a>
+                      <a 
+                        href={registryStats.downloadUrls.inbox} 
+                        download="identities_inbox.jsonl"
+                        className="text-blue-600 hover:text-blue-800 underline hover:no-underline"
+                        title="Scarica inbox"
+                      >
+                        📥 identities_inbox.jsonl
+                      </a>
+                    </div>
+                  </div>
                 </>
               ) : (
                 <>

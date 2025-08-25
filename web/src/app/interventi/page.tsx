@@ -10,6 +10,7 @@ export default function InterventiPage() {
     filename: string
     lastUpdate: string
     source: 'parquet' | 'json' | 'none'
+    downloadUrl: string
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -68,7 +69,7 @@ export default function InterventiPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Interventi Parlamentari</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Interventi Live</h1>
         <p className="text-gray-600">
           Monitoraggio in tempo reale degli interventi dalla Camera e dal Senato
         </p>
@@ -85,7 +86,18 @@ export default function InterventiPage() {
                `${interventionsInfo?.count} interventi`}
             </p>
             <p className="text-sm text-gray-600 mt-1">
-              File: {interventionsInfo?.filename || 'N/A'}
+              File: {interventionsInfo?.downloadUrl ? (
+                <a 
+                  href={interventionsInfo.downloadUrl} 
+                  download={interventionsInfo.filename}
+                  className="text-blue-600 hover:text-blue-800 underline hover:no-underline font-medium"
+                  title={`Scarica ${interventionsInfo.filename}`}
+                >
+                  📥 {interventionsInfo.filename}
+                </a>
+              ) : (
+                interventionsInfo?.filename || 'N/A'
+              )}
             </p>
             <p className="text-sm text-gray-500 mt-1">
               Ultimo aggiornamento: {interventionsInfo?.lastUpdate || 'N/A'}
@@ -103,13 +115,30 @@ export default function InterventiPage() {
             <div>
               <h4 className="font-medium text-blue-900 mb-2">File Parquet Rilevato</h4>
               <p className="text-blue-800 text-sm mb-3">
-                Gli interventi sono disponibili nel file <code className="bg-blue-100 px-2 py-1 rounded">
-                  {interventionsInfo.filename}
-                </code> ma non possono essere visualizzati direttamente nel browser.
+                Gli interventi sono disponibili nel file{' '}
+                {interventionsInfo.downloadUrl ? (
+                  <a 
+                    href={interventionsInfo.downloadUrl} 
+                    download={interventionsInfo.filename}
+                    className="text-blue-700 hover:text-blue-900 underline hover:no-underline font-medium"
+                    title={`Scarica ${interventionsInfo.filename}`}
+                  >
+                    📥 {interventionsInfo.filename}
+                  </a>
+                ) : (
+                  <code className="bg-blue-100 px-2 py-1 rounded">
+                    {interventionsInfo.filename}
+                  </code>
+                )}{' '}
+                ma non possono essere visualizzati direttamente nel browser.
               </p>
               <p className="text-blue-800 text-sm">
                 <strong>Prossimo step:</strong> Implementare pipeline di conversione Parquet → JSON 
                 per visualizzazione web (M2 - Style & Topics).
+              </p>
+              <p className="text-blue-800 text-sm mt-2">
+                <strong>Nota:</strong> Questa pagina mostra lo <em>stato operativo</em> della pipeline. 
+                Per la <em>visualizzazione semantica</em> degli interventi, consulta la pagina <strong>Feed</strong> (disponibile da M2).
               </p>
             </div>
           </div>
@@ -135,6 +164,36 @@ export default function InterventiPage() {
           <div>
             <span className="font-medium text-gray-700">Fonti:</span>
             <span className="ml-2 text-gray-600">Camera + Senato</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Feed vs Interventi Live */}
+      <div className="bg-green-50 border border-green-200 rounded-lg p-6 mb-6">
+        <div className="flex items-start">
+          <div className="text-green-600 text-xl mr-3">📋</div>
+          <div>
+            <h4 className="font-medium text-green-900 mb-2">Feed vs Interventi Live</h4>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-green-800">
+              <div>
+                <h5 className="font-semibold mb-2">📊 Interventi Live (M1)</h5>
+                <ul className="space-y-1">
+                  <li>• Stato operativo pipeline</li>
+                  <li>• File disponibili per download</li>
+                  <li>• Metriche tecniche ingest</li>
+                  <li>• Status Camera/Senato</li>
+                </ul>
+              </div>
+              <div>
+                <h5 className="font-semibold mb-2">📰 Feed (M2+)</h5>
+                <ul className="space-y-1">
+                  <li>• Interventi rielaborati semanticamente</li>
+                  <li>• Ranking qualità argomentativa</li>
+                  <li>• Badge e indicatori</li>
+                  <li>• Organizzazione per temi</li>
+                </ul>
+              </div>
+            </div>
           </div>
         </div>
       </div>

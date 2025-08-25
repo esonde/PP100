@@ -152,6 +152,11 @@ export async function getRegistryStats(): Promise<{
   inboxCount: number
   persons: Person[]
   parties: Party[]
+  downloadUrls: {
+    persons: string
+    parties: string
+    inbox: string
+  }
 }> {
   try {
     const [persons, parties, inbox] = await Promise.all([
@@ -165,7 +170,12 @@ export async function getRegistryStats(): Promise<{
       partiesCount: parties.length,
       inboxCount: inbox.length,
       persons,
-      parties
+      parties,
+      downloadUrls: {
+        persons: '/data/persons.jsonl',
+        parties: '/data/party_registry.jsonl',
+        inbox: '/data/identities_inbox.jsonl'
+      }
     }
   } catch {
     return {
@@ -173,7 +183,12 @@ export async function getRegistryStats(): Promise<{
       partiesCount: 0,
       inboxCount: 0,
       persons: [],
-      parties: []
+      parties: [],
+      downloadUrls: {
+        persons: '/data/persons.jsonl',
+        parties: '/data/party_registry.jsonl',
+        inbox: '/data/identities_inbox.jsonl'
+      }
     }
   }
 }
@@ -184,22 +199,25 @@ export async function getInterventionsInfo(manifest: ManifestData): Promise<{
   filename: string
   lastUpdate: string
   source: 'parquet' | 'json' | 'none'
+  downloadUrl: string
 }> {
   if (!manifest.current?.interventions) {
-    return { count: 0, filename: 'N/A', lastUpdate: 'N/A', source: 'none' }
+    return { count: 0, filename: 'N/A', lastUpdate: 'N/A', source: 'none', downloadUrl: '' }
   }
   
   const filename = getFileName(manifest.current.interventions)
   const lastUpdate = manifest.generated_at
+  const downloadUrl = `/data/${filename}`
   
   // Per ora, se il file è parquet, non possiamo leggerlo nel browser
-  // Ma possiamo mostrare che esiste
+  // Ma possiamo mostrare che esiste e permettere il download
   if (filename.endsWith('.parquet')) {
     return {
       count: -1, // -1 significa "file esiste ma count sconosciuto"
       filename,
       lastUpdate: formatDate(lastUpdate),
-      source: 'parquet'
+      source: 'parquet',
+      downloadUrl
     }
   }
   
@@ -211,14 +229,16 @@ export async function getInterventionsInfo(manifest: ManifestData): Promise<{
         count,
         filename,
         lastUpdate: formatDate(lastUpdate),
-        source: 'json'
+        source: 'json',
+        downloadUrl
       }
     } catch {
       return {
         count: 0,
         filename,
         lastUpdate: formatDate(lastUpdate),
-        source: 'json'
+        source: 'json',
+        downloadUrl
       }
     }
   }
@@ -227,6 +247,7 @@ export async function getInterventionsInfo(manifest: ManifestData): Promise<{
     count: 0,
     filename,
     lastUpdate: formatDate(lastUpdate),
-    source: 'none'
+    source: 'none',
+    downloadUrl: ''
   }
 }
