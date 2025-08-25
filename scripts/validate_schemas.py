@@ -7,7 +7,7 @@ Validates all JSON schemas in the schemas/ directory
 import json
 import sys
 from pathlib import Path
-from jsonschema import validate, ValidationError
+from jsonschema import Draft7Validator
 
 def validate_schema_file(schema_path: Path) -> bool:
     """Validate a single schema file"""
@@ -20,10 +20,9 @@ def validate_schema_file(schema_path: Path) -> bool:
             print(f"❌ {schema_path}: Schema must be a JSON object")
             return False
             
-        # Check required fields for JSON Schema
+        # Check if this is a JSON Schema
         if "$schema" in schema:
             # This is a JSON Schema, validate it
-            from jsonschema import Draft7Validator
             Draft7Validator.check_schema(schema)
             print(f"✅ {schema_path}: Valid JSON Schema")
         else:
@@ -35,11 +34,8 @@ def validate_schema_file(schema_path: Path) -> bool:
     except json.JSONDecodeError as e:
         print(f"❌ {schema_path}: Invalid JSON - {e}")
         return False
-    except ValidationError as e:
-        print(f"❌ {schema_path}: Invalid JSON Schema - {e}")
-        return False
     except Exception as e:
-        print(f"❌ {schema_path}: Error - {e}")
+        print(f"❌ {schema_path}: Invalid JSON Schema - {e}")
         return False
 
 def validate_all_schemas() -> bool:
