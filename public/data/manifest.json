@@ -1,0 +1,27 @@
+{
+  "version": "0.1.0",
+  "generated_at": "2025-01-27T10:00:00Z",
+  "files": {
+    "cards": {
+      "filename": "cards-20250127.jsonl",
+      "version": "0.1.0",
+      "generated_at": "2025-01-27T10:00:00Z",
+      "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "record_count": 5,
+      "status": "active"
+    },
+    "scores-rolling": {
+      "filename": "scores-rolling-20250127.json",
+      "version": "0.1.0",
+      "generated_at": "2025-01-27T10:00:00Z",
+      "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+      "record_count": 8,
+      "status": "active"
+    }
+  },
+  "status": {
+    "overall": "healthy",
+    "last_success": "2025-01-27T10:00:00Z",
+    "degradations": []
+  }
+}

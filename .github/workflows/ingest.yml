@@ -1,0 +1,198 @@
+name: PP100 Pipeline - Ingest & Deploy
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+  schedule:
+    # Cron ogni 5 minuti per pipeline live
+    - cron: '*/5 * * * *'
+  workflow_dispatch: # Permette esecuzione manuale
+
+concurrency:
+  group: pipeline-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  setup:
+    runs-on: ubuntu-latest
+    outputs:
+      node-version: ${{ steps.setup-node.outputs.node-version }}
+      python-version: ${{ steps.setup-python.outputs.python-version }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js LTS
+        id: setup-node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+          
+      - name: Setup Python 3.11
+        id: setup-python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+
+  validate:
+    needs: setup
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+          
+      - name: Validate schemas
+        run: |
+          python scripts/validate_schemas.py
+          
+      - name: Validate manifest structure
+        run: |
+          python -c "
+          import json
+          with open('public/data/manifest.json') as f:
+              manifest = json.load(f)
+          assert 'files' in manifest, 'Manifest must contain files section'
+          assert 'status' in manifest, 'Manifest must contain status section'
+          print('✅ Manifest structure is valid')
+          "
+
+  build-web:
+    needs: [setup, validate]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Node.js LTS
+        uses: actions/setup-node@v4
+        with:
+          node-version: 'lts/*'
+          cache: 'npm'
+          cache-dependency-path: web/package-lock.json
+          
+      - name: Install dependencies
+        working-directory: web
+        run: npm ci
+        
+      - name: Lint and type check
+        working-directory: web
+        run: |
+          npm run lint
+          npm run type-check
+          
+      - name: Build and export
+        working-directory: web
+        run: npm run export
+        
+      - name: Upload build artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: web-build
+          path: web/out/
+          retention-days: 1
+
+  deploy-pages:
+    needs: [setup, validate, build-web]
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/main'
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: web-build
+          path: web/out/
+          
+      - name: Setup Pages
+        uses: actions/configure-pages@v4
+        
+      - name: Upload to Pages
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: web/out/
+          
+      - name: Deploy to Pages
+        id: deployment
+        uses: actions/deploy-pages@v4
+
+  summary:
+    needs: [setup, validate, build-web, deploy-pages]
+    runs-on: ubuntu-latest
+    if: always()
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Generate job summary
+        run: |
+          echo "## 🚀 PP100 Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Pipeline Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Setup**: ${{ needs.setup.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Validation**: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Build**: ${{ needs.build-web.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Deploy**: ${{ needs.deploy-pages.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          
+          echo "### 📁 Data Files Status" >> $GITHUB_STEP_SUMMARY
+          if [ -f "public/data/manifest.json" ]; then
+            echo "✅ Manifest file present" >> $GITHUB_STEP_SUMMARY
+            echo "- Generated: $(jq -r '.generated_at' public/data/manifest.json)" >> $GITHUB_STEP_SUMMARY
+            echo "- Overall status: $(jq -r '.status.overall' public/data/manifest.json)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "❌ Manifest file missing" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔍 Mock Data Counts" >> $GITHUB_STEP_SUMMARY
+          if [ -f "public/data/cards-20250127.jsonl" ]; then
+            CARD_COUNT=$(wc -l < public/data/cards-20250127.jsonl)
+            echo "- Cards: $CARD_COUNT records" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          if [ -f "public/data/scores-rolling-20250127.json" ]; then
+            SCORE_COUNT=$(jq '.scores | length' public/data/scores-rolling-20250127.json)
+            echo "- Scores: $SCORE_COUNT records" >> $GITHUB_STEP_SUMMARY
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🚧 Degradations" >> $GITHUB_STEP_SUMMARY
+          if [ -f "public/data/manifest.json" ]; then
+            DEGRADATIONS=$(jq -r '.status.degradations[]?' public/data/manifest.json 2>/dev/null || echo "None")
+            if [ "$DEGRADATIONS" != "None" ]; then
+              echo "- $DEGRADATIONS" >> $GITHUB_STEP_SUMMARY
+            else
+              echo "- Nessuna degradazione attiva" >> $GITHUB_STEP_SUMMARY
+            fi
+          fi
+          
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Pipeline eseguita il ${{ github.event.head_commit.timestamp || 'now' }}*" >> $GITHUB_STEP_SUMMARY

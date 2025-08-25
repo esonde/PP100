@@ -1,0 +1,318 @@
+# Parlamento Live — Piano di Implementazione (GitHub‑only)
+
+> Obiettivo: rilasciare **piccoli incrementi funzionali** (vertical slice) che mantengano il repo sempre in stato deployabile su GitHub Pages + Actions, senza backend. Ogni milestone produce **file pubblici stabili** (data contract) che il web legge direttamente.
+
+---
+
+## Principi guida
+
+* **Walking skeleton**: prima un sito statico che legge **file finti ma con schema definitivo**, poi sostituiamo le sorgenti con pipeline reali.
+* **Data contracts**: ogni step scrive file con **schema versionato** in `schemas/` e validato in CI. Cambiare uno schema richiede bump `*_version` e migrazione.
+* **Idempotenza e cache**: ogni job ricalcola solo il necessario; uso di chiavi deterministiche (sha256) e cache per embeddings/LLM.
+* **Feature flags**: pubblicazione gated da `manifest.json` (attiva/disattiva feed e cards per pipeline incomplete).
+* **Fail-soft**: se cade una pipeline, il job continua e pubblica ciò che è sano (status nel manifest).
+* **Zero lock‑in**: modelli e vettori in LFS/Release asset; librerie pin‑version e opzioni open-source by default.
+
+---
+
+## Roadmap per milestone (M0 → M8)
+
+### M0 — Walking Skeleton (sito + contratti dati)
+
+**Scopo**: vedere una pagina pubblica che legge `public/data/*.jsonl|parquet` fittizi.
+
+**Deliverable**
+
+* `web/` (Next.js static export o SvelteKit adapter-static) con:
+
+  * Home + `/feed` che legge `cards-YYYYMMDD.jsonl`.
+  * `/metrics` che legge `scores-rolling.parquet` (mock) e mostra PP.
+* `public/data/manifest.json` (schema definitivo) + mock dei principali file.
+* `schemas/` con JSON Schema/pydantic per: `interventions`, `features`, `cards`, `llm-events`, `scores-rolling`, `manifest`.
+* CI base: Pages deploy, lint & schema-validate file mock.
+* `Makefile`, `pre-commit`, `.env.example`, `CONTRIBUTING.md` (stile commit/PR/labels).
+
+**Accettazione**
+
+* Build e deploy passano; il sito mostra 3 card mock e una tabella PP.
+
+**Rischi/mitigazioni**: nessuno lato sorgenti reali; attenzione a dimensione asset/Pages.
+
+---
+
+### M1 — P0 Ingest minimo (live HTML only)
+
+**Scopo**: estrarre **interventi normalizzati** (solo live HTML) da Camera + Senato.
+
+**Deliverable**
+
+* `ingest/run_ingest.py`: adapter `camera_html.py`, `senato_html.py` con **ETag/If-Modified-Since** e backoff.
+* Normalizzazione → `interventions-YYYYMMDD.parquet` con: `id, camera_senato, seduta, ts_start, oratore, gruppo, text, spans_frasi[], source_url`.
+* Test unitari per parsing (snapshot di 2 pagine reali in `ingest/tests/fixtures/`).
+* Log strutturati (JSON) + conteggio nuovi interventi.
+
+**Accettazione**
+
+* A cron manuale, produce un Parquet con ≥20 interventi reali in giornata e `manifest.json` punta al file.
+
+**Rischi**
+
+* HTML volatile → **Mitigazione**: estrattori via selettori robusti + fallback a regex e normalizzazioni; mantenere fixtures.
+
+---
+
+### M2 — P1 Stile & P2 Topics “light”
+
+**Scopo**: arricchire con feature a basso costo e stabili.
+
+**Deliverable**
+
+* `enrich/run_enrich.py` con moduli:
+
+  * `style.py` (Gulpease, len, %hedges, %citazioni normative/numeriche).
+  * `topic_light.py` (tf‑idf + NMF 8 topic; fit settimanale → `models/topic_nmf.joblib`).
+* Output: `features-YYYYMMDD.parquet` (include `topic_vec[8], top_terms`).
+* Grafici base in `public/plots/` (PNG) generati da job.
+
+**Accettazione**
+
+* `/metrics` mostra istogrammi/facet sui nuovi campi; schema validato.
+
+**Rischi**: tempi CPU su Actions → mitigare con cache `pip` e job separati.
+
+---
+
+### M3 — fastText triage (Argomentatività + Check‑worthiness)
+
+**Scopo**: ridurre il costo LLM selezionando frasi candidate.
+
+**Deliverable**
+
+* Cartella `enrich/fasttext/` con:
+
+  * `train_arg.py`, `train_cw.py` (rolling split temporale; Platt/temperature opzionale).
+  * `infer.py` per batch su frasi → `arg-score-YYYYMMDD.parquet` e `claims-cw-ranked-YYYYMMDD.jsonl`.
+* Gold set starter (`data/gold/`) con 300–500 frasi etichettate; guideline labeling.
+* In CI: test di caricamento modelli e inferenza su sample.
+
+**Accettazione**
+
+* File prodotti e letti dal web (badge “triage attivo” nella UI).
+
+**Rischi**
+
+* Qualità bassa iniziale → **Mitigazione**: soglie conservative, solo ranking; feedback loop con gold set.
+
+---
+
+### M4 — P3 Near‑duplicate & Agenda Adoption
+
+**Scopo**: cluster di frasi simili per misurare diffusione narrative.
+
+**Deliverable**
+
+* Prefiltro cosine su medie di vettori (fastText) + conferma con **E5‑small** (CPU ok) via `sentence-transformers`.
+* `duplicates-YYYYMMDD.parquet` (cluster\_id, leader\_id, lag, size).
+* Badge “Copia‑incolla Radar” nel feed.
+
+**Accettazione**
+
+* Almeno 2 cluster > 3 oratori rilevati su dati reali dell’ultima settimana.
+
+**Rischi**
+
+* Costi embeddings → cache su disco (`.cache/embeddings/`) con chiave sha256(frase).
+
+---
+
+### M5 — LLM ragionatore (JSON‑only) + Validator deterministici
+
+**Scopo**: estrazioni affidabili su subset (P3/P4/P6) con **un solo LLM** e guardrail duri.
+
+**Deliverable**
+
+* `enrich/llm_runner.py` con:
+
+  * prompt Appendix A1, **output‑only JSON**;
+  * cache per task|prompt\_ver|frase;
+  * **validator**: schema (pydantic), span‑check, whitelist variabili/unità/periodi, gating `confidence ≥ 0.66`.
+* Output: `llm-events-YYYYMMDD.jsonl`.
+* Generazione `cards-YYYYMMDD.jsonl` (regole P11) per: fallacia del minuto, spin‑o‑metro, copia‑incolla.
+* UI: `/feed` mostra cards con link + highlight span.
+
+**Accettazione**
+
+* 1 card al giorno prodotta da eventi reali con evidence linkabile.
+
+**Rischi**
+
+* Hallucinations → **Mitigazione**: publish‑gate + span‑proof + whitelist.
+
+---
+
+### M6 — P8 Stance & join con voti/atti + P9/P10 Indicatori & PP
+
+**Scopo**: chiudere il cerchio discorso→voto→PP.
+
+**Deliverable**
+
+* `models/stance.joblib` (logistic su tf‑idf, 3 classi: pro/contro/neutro).
+* Join con votazioni/atti (open data Camera/Senato) → `join-votes-YYYYMMDD.parquet`.
+* `scoring/run_scoring.py` per Q/K/V/I/R, PP e rolling 30–60 gg → `scores-rolling.parquet`.
+* UI: pagine oratore/partito con trend PP e breakdown componenti.
+
+**Accettazione**
+
+* PP visibile per almeno 10 oratori con intervalli di confidenza (bootstrap).
+
+**Rischi**
+
+* Mapping discorso↔atto rumoroso → filtri su finestra temporale e keyword, flag “low‑confidence”.
+
+---
+
+### M7 — Framework Agentico (Insight & Blog)
+
+**Scopo**: report automatici giornalieri + registro previsioni.
+
+**Deliverable**
+
+* `insights/run_insights.py` con ruoli: Profiler → Ideatore (LLM) → Tester (Python) → Curatore → Redattore (LLM) → Archivista.
+* Output: `/web/content/blog/YYYY-MM-DD.md(x)`, `public/data/predictions.jsonl`, `public/rss.xml`.
+* UI: indice blog + pagina “Trasparenza” con errori ex‑post (Brier/log‑loss).
+
+**Accettazione**
+
+* Un post generato con ≥5 insight (ognuno con caveat) e collegamenti a card/dati.
+
+**Rischi**
+
+* Overfitting/Multiple testing → controllo BH e holdout temporale obbligatorio.
+
+---
+
+### M8 — Nightly refine (XML/stenografici), robustezza & qualità
+
+**Scopo**: rielaborare con sorgenti “gold” e migliorare qualità/trasparenza.
+
+**Deliverable**
+
+* Parser XML Camera + stenografico Senato (HTML/PDF→XML se disponibile) con riallineamento `span`.
+* Ricalcolo nightly di `llm-events` e `PP` con dati raffinati; audit log `pp_version`.
+* Pagina “Come misuriamo” + gold set esteso (κ di Cohen) + backtest 12 mesi.
+
+**Accettazione**
+
+* Differenze tra live e refine mostrate e versionate; varianti riproducibili.
+
+---
+
+## Struttura repo (definitiva, incrementale)
+
+```
+.
+├─ ingest/                 # P0
+│  ├─ adapters/{camera_html,senato_html,xml_*,pdf_*}.py
+│  ├─ run_ingest.py
+│  └─ tests/
+├─ enrich/                 # P1–P8
+│  ├─ style.py  topic_light.py  duplicates.py
+│  ├─ fasttext/{train_*.py,infer.py,models/}
+│  ├─ llm_runner.py  validators.py  cards.py
+│  ├─ models/{stance.joblib,topic_nmf.joblib}
+│  ├─ run_enrich.py
+│  └─ tests/
+├─ scoring/                # P9–P11
+│  ├─ run_scoring.py
+│  └─ tests/
+├─ insights/               # Orchestratore agentico
+│  ├─ run_insights.py  prompts/
+│  └─ tests/
+├─ web/                    # Next.js/SvelteKit static
+│  ├─ src/  package.json
+│  └─ scripts/read_data.ts
+├─ public/data/            # JSON/Parquet pubblicati
+├─ public/plots/           # grafici png
+├─ schemas/                # JSON Schema/pydantic models
+├─ .github/workflows/
+│  ├─ ingest.yml           # */5 — pipeline + build + deploy
+│  ├─ nightly.yml          # 02:00 — refine
+│  └─ insights.yml         # 02:30 — report/RSS
+├─ Makefile  pre-commit-config.yaml
+├─ README.md  CONTRIBUTING.md  CODE_OF_CONDUCT.md
+└─ .env.example
+```
+
+## GitHub Actions — progressivo (concurrency & resilienza)
+
+* **concurrency**: `group: pipeline-${{ github.ref }}` con `cancel-in-progress: true`.
+* **jobs**: `setup → ingest → enrich → scoring → build_web → deploy_pages`.
+* **cache**: pip + embeddings (`actions/cache`), artefatti Parquet per 1 giorno.
+* **telemetria**: summary Markdown del job con conteggi record; sezione “Degradazioni disattivate”.
+
+## Data contracts & validazione
+
+* `schemas/*.json` + `scripts/validate_schemas.py` in CI.
+* Ogni file in `public/data/` ha `version` e `generated_at` (UTC) + checksum nel `manifest`.
+
+## Rischi chiave e piani B
+
+1. **Cambio HTML sorgenti** → abstract adapter + fixtures + fallback `requests_html` + XPaths multipli.
+2. **PDF complessi (Senato)** → estrazione `pdfminer.six` + heuristics; se fragile, rimandare a M8 (XML night).
+3. **Limiti cron Pages/Actions** → consolidare in un job unico e ridurre heavy steps a 15’ se necessario.
+4. **Costi LLM** → gating aggressivo (M3) e `prompt caching`; limite max call per job.
+5. **Dimensione repo** → ruotare file per data, tenere solo ultimi N giorni in `main`, archivio su Releases.
+
+## Qualità & misurazione (Definition of Done)
+
+* **Schema lock**: nessun breaking change senza bump.
+* **Test**: 80% per parsing/validatori; golden tests su 10 esempi reali per pipeline critiche.
+* **Calibrazione**: κ di Cohen ≥ 0.65 sui gold set (fallacie/stance) prima di pubblicare metriche globali.
+* **Trasparenza**: pagina “Come misuriamo” con formule PP e pesi versionati.
+
+## Checklist iniziale (aprire come Issues con label)
+
+* [ ] M0: scaffold web + mock data + manifest + CI Pages
+* [ ] M0: schemas + validazione CI + Makefile + pre‑commit
+* [ ] M1: adapter Camera (HTML) + tests
+* [ ] M1: adapter Senato (HTML) + tests
+* [ ] M1: normalizzazione Parquet + spans frasi
+* [ ] M2: style.py + topic\_light.py + modelli NMF con cache
+* [ ] M3: fastText train/infer (arg, cw) + gold set starter
+* [ ] M4: duplicates (fastText avg → E5‑small) + cache embeddings
+* [ ] M5: llm\_runner + validators + cards feed
+* [ ] M6: stance tf‑idf + join voti + scoring PP
+* [ ] M7: orchestratore insight + blog + RSS
+* [ ] M8: refine XML/stenografico + audit qualità
+
+## Script pronti‑all’uso (snippet CLI)
+
+```bash
+# Validazione schemi prima del commit
+make validate
+
+# Esecuzione locale end‑to‑end su sample
+make run-all   # ingest → enrich → scoring → web build
+
+# Rigenera feed con gating e cards
+python enrich/llm_runner.py --day 2025-08-24 --limit 300 --min-conf 0.66
+python scoring/run_scoring.py --window 60
+```
+
+## Note sull’UI
+
+* `/feed`: cards ordinarie con badge (evidence, confidenza, severità, cluster size).
+* `/politico/[slug]`: pagina oratore con PP rolling + breakdown Q/K/V/I/R.
+* `/metodo`: spiegazione misure, formule, versionamento pesi PP.
+* `/blog`: report giornaliero + indice + RSS.
+
+---
+
+### Prossimi passi consigliati
+
+1. **Esegui M0** e committa mock + schemas + CI Pages.
+2. **Apri tutte le Issues della checklist** (epic per milestone) e assegna priorità.
+3. **Procedi M1→M2** per avere il primo dato reale a UI stabile.
+4. **Blocca i contratti** prima di attivare LLM (M5).
+
+> Con questa sequenza hai sempre un sito funzionante; ogni milestone aggiunge valore visibile mentre limita l’esposizione al rischio.

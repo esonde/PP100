@@ -1,0 +1,73 @@
+name: PP100 Insights & Blog
+
+on:
+  schedule:
+    # 02:30 Europe/Rome (01:30 UTC in inverno, 00:30 UTC in estate)
+    - cron: '30 1 * * *'
+  workflow_dispatch: # Permette esecuzione manuale
+
+concurrency:
+  group: insights-generation
+  cancel-in-progress: false
+
+jobs:
+  insights:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+          
+      - name: Validate data integrity
+        run: |
+          python scripts/validate_schemas.py
+          
+      - name: Insights pipeline placeholder
+        run: |
+          echo "🚀 PP100 Insights Pipeline Starting..."
+          echo "⏰ Time: $(date -u)"
+          echo "📍 Timezone: Europe/Rome (02:30 local)"
+          echo ""
+          echo "📋 TODO: Implementare insights pipeline"
+          echo "- Profiler → Ideatore (LLM) → Tester (Python)"
+          echo "- Curatore → Redattore (LLM) → Archivista"
+          echo "- Generazione blog posts in /web/content/blog/"
+          echo "- Aggiornamento predictions.jsonl"
+          echo "- Generazione RSS feed"
+          echo ""
+          echo "✅ Per ora: solo validazione integrità dati"
+          
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## 💡 PP100 Insights Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Data Validation**: ${{ steps.validate-data-integrity.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Insights Pipeline**: 🚧 Not implemented yet" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔄 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Implementare framework agentico in M7" >> $GITHUB_STEP_SUMMARY
+          echo "- Aggiungere generazione blog automatico" >> $GITHUB_STEP_SUMMARY
+          echo "- Implementare sistema RSS" >> $GITHUB_STEP_SUMMARY
+          echo "- Aggiungere registro previsioni" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Insights pipeline eseguito il ${{ github.event.head_commit.timestamp || 'now' }}*" >> $GITHUB_STEP_SUMMARY

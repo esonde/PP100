@@ -1,0 +1,130 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PP100 Rolling Scores",
+  "description": "Schema for rolling parliamentary performance scores (PP)",
+  "type": "object",
+  "required": ["version", "generated_at", "scores"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version in semver format"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when scores were calculated"
+    },
+    "window_days": {
+      "type": "integer",
+      "minimum": 1,
+      "maximum": 365,
+      "description": "Rolling window size in days"
+    },
+    "scores": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["oratore", "gruppo", "pp_score", "last_updated", "components"],
+        "properties": {
+          "oratore": {
+            "type": "string",
+            "description": "Name of the parliamentarian"
+          },
+          "gruppo": {
+            "type": "string",
+            "description": "Political group"
+          },
+          "pp_score": {
+            "type": "number",
+            "minimum": 0.0,
+            "maximum": 100.0,
+            "description": "Overall PP score (0-100)"
+          },
+          "last_updated": {
+            "type": "string",
+            "format": "date-time",
+            "description": "When this score was last updated"
+          },
+          "confidence_interval": {
+            "type": "object",
+            "properties": {
+              "lower": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 100.0
+              },
+              "upper": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 100.0
+              }
+            }
+          },
+          "components": {
+            "type": "object",
+            "required": ["Q", "K", "V", "I", "R"],
+            "properties": {
+              "Q": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 100.0,
+                "description": "Quality score (argomentatività, chiarezza)"
+              },
+              "K": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 100.0,
+                "description": "Knowledge score (preparazione, citazioni corrette)"
+              },
+          "V": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 100.0,
+                "description": "Veracity score (accuratezza, evitare fallacie)"
+              },
+              "I": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 100.0,
+                "description": "Integrity score (coerenza, evitare spin)"
+              },
+              "R": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 100.0,
+                "description": "Respect score (civiltà, evitare attacchi personali)"
+              }
+            }
+          },
+          "metrics": {
+            "type": "object",
+            "properties": {
+              "interventions_count": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of interventions in the window"
+              },
+              "fallacies_detected": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of logical fallacies detected"
+              },
+              "duplicates_count": {
+                "type": "integer",
+                "minimum": 0,
+                "description": "Number of duplicate statements"
+              },
+              "stance_consistency": {
+                "type": "number",
+                "minimum": 0.0,
+                "maximum": 1.0,
+                "description": "Consistency of political stance"
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

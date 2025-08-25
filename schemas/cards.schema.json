@@ -1,0 +1,97 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PP100 Event Cards",
+  "description": "Schema for event cards that highlight notable parliamentary events",
+  "type": "object",
+  "required": ["id", "type", "title", "description", "confidence", "severity", "source_url", "created_at"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{8}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{4}-[a-f0-9]{12}$",
+      "description": "Unique identifier for the card"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["fallacy", "spin", "duplicate", "stance", "metric"],
+      "description": "Type of event detected"
+    },
+    "title": {
+      "type": "string",
+      "maxLength": 200,
+      "description": "Short descriptive title"
+    },
+    "description": {
+      "type": "string",
+      "maxLength": 1000,
+      "description": "Detailed description of the event"
+    },
+    "confidence": {
+      "type": "number",
+      "minimum": 0.0,
+      "maximum": 1.0,
+      "description": "Confidence score (0-1) for the detection"
+    },
+    "severity": {
+      "type": "string",
+      "enum": ["low", "medium", "high", "critical"],
+      "description": "Severity level of the event"
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the source parliamentary session"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this card was created"
+    },
+    "metadata": {
+      "type": "object",
+      "description": "Additional metadata specific to card type",
+      "properties": {
+        "oratore": {
+          "type": "string",
+          "description": "Name of the speaker"
+        },
+        "gruppo": {
+          "type": "string",
+          "description": "Political group of the speaker"
+        },
+        "seduta": {
+          "type": "string",
+          "description": "Session identifier"
+        },
+        "spans": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["start", "end", "text"],
+            "properties": {
+              "start": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "end": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "text": {
+                "type": "string"
+              }
+            }
+          }
+        },
+        "cluster_id": {
+          "type": "string",
+          "description": "ID for duplicate detection clusters"
+        },
+        "cluster_size": {
+          "type": "integer",
+          "minimum": 1,
+          "description": "Number of similar statements in cluster"
+        }
+      }
+    }
+  }
+}

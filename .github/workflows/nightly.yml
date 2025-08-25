@@ -1,0 +1,71 @@
+name: PP100 Nightly Refine
+
+on:
+  schedule:
+    # 02:00 Europe/Rome (01:00 UTC in inverno, 00:00 UTC in estate)
+    - cron: '0 1 * * *'
+  workflow_dispatch: # Permette esecuzione manuale
+
+concurrency:
+  group: nightly-refine
+  cancel-in-progress: false
+
+jobs:
+  refine:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        
+      - name: Setup Python 3.11
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.11'
+          
+      - name: Cache pip dependencies
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+            
+      - name: Install Python dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install jsonschema
+          
+      - name: Validate existing schemas
+        run: |
+          python scripts/validate_schemas.py
+          
+      - name: Nightly refine placeholder
+        run: |
+          echo "🚀 PP100 Nightly Refine Starting..."
+          echo "⏰ Time: $(date -u)"
+          echo "📍 Timezone: Europe/Rome (02:00 local)"
+          echo ""
+          echo "📋 TODO: Implementare refine pipeline"
+          echo "- Ricalcolo scores con dati raffinati"
+          echo "- Aggiornamento manifest.json"
+          echo "- Generazione grafici in public/plots/"
+          echo "- Audit log per versioni PP"
+          echo ""
+          echo "✅ Per ora: solo validazione schemi esistenti"
+          
+      - name: Generate summary
+        if: always()
+        run: |
+          echo "## 🌙 PP100 Nightly Refine Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 📊 Status" >> $GITHUB_STEP_SUMMARY
+          echo "- **Schema Validation**: ${{ steps.validate-existing-schemas.outcome }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Refine Pipeline**: 🚧 Not implemented yet" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### 🔄 Next Steps" >> $GITHUB_STEP_SUMMARY
+          echo "- Implementare refine pipeline in M8" >> $GITHUB_STEP_SUMMARY
+          echo "- Aggiungere generazione grafici" >> $GITHUB_STEP_SUMMARY
+          echo "- Implementare audit log" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "---" >> $GITHUB_STEP_SUMMARY
+          echo "*Nightly refine eseguito il ${{ github.event.head_commit.timestamp || 'now' }}*" >> $GITHUB_STEP_SUMMARY

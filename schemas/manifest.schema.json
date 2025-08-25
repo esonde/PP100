@@ -1,0 +1,83 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "PP100 Data Manifest",
+  "description": "Manifest file that tracks all published data files and their metadata",
+  "type": "object",
+  "required": ["version", "generated_at", "files", "status"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$",
+      "description": "Schema version in semver format"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when manifest was generated"
+    },
+    "files": {
+      "type": "object",
+      "description": "Mapping of file types to their current versions",
+      "patternProperties": {
+        "^[a-z-]+$": {
+          "type": "object",
+          "required": ["filename", "version", "generated_at", "checksum", "record_count"],
+          "properties": {
+            "filename": {
+              "type": "string",
+              "description": "Actual filename in public/data/"
+            },
+            "version": {
+              "type": "string",
+              "description": "Data version identifier"
+            },
+            "generated_at": {
+              "type": "string",
+              "format": "date-time",
+              "description": "When this data file was created"
+            },
+            "checksum": {
+              "type": "string",
+              "pattern": "^[a-f0-9]{64}$",
+              "description": "SHA256 hash of file content"
+            },
+            "record_count": {
+              "type": "integer",
+              "minimum": 0,
+              "description": "Number of records in the file"
+            },
+            "status": {
+              "type": "string",
+              "enum": ["active", "stale", "error"],
+              "default": "active"
+            }
+          }
+        }
+      }
+    },
+    "status": {
+      "type": "object",
+      "description": "Overall pipeline status",
+      "required": ["overall", "last_success", "degradations"],
+      "properties": {
+        "overall": {
+          "type": "string",
+          "enum": ["healthy", "degraded", "failed"],
+          "description": "Overall pipeline health"
+        },
+        "last_success": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Last successful pipeline run"
+        },
+        "degradations": {
+          "type": "array",
+          "items": {
+            "type": "string"
+          },
+          "description": "List of currently disabled features"
+        }
+      }
+    }
+  }
+}
