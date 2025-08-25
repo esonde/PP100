@@ -21,6 +21,7 @@ export default function RootLayout({
           <div className="container mx-auto px-4 py-6">
             <h1 className="text-3xl font-bold">PP100</h1>
             <p className="text-blue-100">Parlamento Live - Qualità del Dibattito</p>
+            {/* Navigation menu */}
             <nav className="mt-4">
               <ul className="flex space-x-6">
                 <li><a href="/PP100/" className="hover:text-blue-200 transition-colors">Home</a></li>
