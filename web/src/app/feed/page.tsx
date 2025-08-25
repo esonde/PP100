@@ -1,6 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
+import Select from 'react-select'
 
 interface Card {
   id: string
@@ -21,10 +22,23 @@ interface Card {
   }
 }
 
+interface SelectOption {
+  value: string
+  label: string
+}
+
 export default function FeedPage() {
   const [cards, setCards] = useState<Card[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  
+  // Filtri
+  const [filters, setFilters] = useState({
+    gruppo: '',
+    oratore: '',
+    type: '',
+    severity: ''
+  })
 
   useEffect(() => {
     const fetchCards = async () => {
@@ -49,6 +63,59 @@ export default function FeedPage() {
 
     fetchCards()
   }, [])
+
+  // Estrai valori unici per i filtri
+  const uniqueValues = useMemo(() => {
+    const gruppi = Array.from(new Set(cards.map(card => card.metadata.gruppo).filter(Boolean)))
+    const oratori = Array.from(new Set(cards.map(card => card.metadata.oratore).filter(Boolean)))
+    const types = Array.from(new Set(cards.map(card => card.type)))
+    const severities = Array.from(new Set(cards.map(card => card.severity)))
+    
+    return { gruppi, oratori, types, severities }
+  }, [cards])
+
+  // Converti in opzioni per react-select
+  const selectOptions = useMemo(() => ({
+    gruppi: [{ value: '', label: 'Tutti i gruppi' }, ...uniqueValues.gruppi.map(gruppo => ({ value: gruppo, label: gruppo }))],
+    oratori: [{ value: '', label: 'Tutti i parlamentari' }, ...uniqueValues.oratori.map(oratore => ({ value: oratore, label: oratore }))],
+    types: [{ value: '', label: 'Tutti i tipi' }, ...uniqueValues.types.map(type => ({ 
+      value: type, 
+      label: type === 'fallacy' ? 'Fallacia' :
+             type === 'spin' ? 'Spin' :
+             type === 'duplicate' ? 'Duplicato' :
+             type === 'stance' ? 'Stance' :
+             type === 'metric' ? 'Metrica' : type
+    }))],
+    severities: [
+      { value: '', label: 'Tutte le gravità' },
+      { value: 'low', label: '🟢 Bassa' },
+      { value: 'medium', label: '🟡 Media' },
+      { value: 'high', label: '🟠 Alta' },
+      { value: 'critical', label: '🔴 Critica' }
+    ].filter(option => option.value === '' || uniqueValues.severities.includes(option.value as any))
+  }), [uniqueValues])
+
+  // Applica filtri
+  const filteredCards = useMemo(() => {
+    return cards.filter(card => {
+      if (filters.gruppo && card.metadata.gruppo !== filters.gruppo) return false
+      if (filters.oratore && card.metadata.oratore !== filters.oratore) return false
+      if (filters.type && card.type !== filters.type) return false
+      if (filters.severity && card.severity !== filters.severity) return false
+      return true
+    })
+  }, [cards, filters])
+
+  const clearFilters = () => {
+    setFilters({
+      gruppo: '',
+      oratore: '',
+      type: '',
+      severity: ''
+    })
+  }
+
+  const hasActiveFilters = Object.values(filters).some(filter => filter !== '')
 
   const getBadgeClass = (type: string) => {
     switch (type) {
@@ -109,12 +176,79 @@ export default function FeedPage() {
           Eventi rilevati automaticamente nel dibattito parlamentare
         </p>
         <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500">
-          Mostrando {cards.length} eventi • Ultimo aggiornamento: {formatDate(cards[0]?.created_at || '')}
+          Mostrando {filteredCards.length} di {cards.length} eventi • Ultimo aggiornamento: {formatDate(cards[0]?.created_at || '')}
+        </div>
+      </div>
+
+      {/* Filtri */}
+      <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="flex flex-wrap items-center gap-4 mb-4">
+          <h3 className="text-lg font-medium text-gray-900">🔍 Filtri</h3>
+          {hasActiveFilters && (
+            <button
+              onClick={clearFilters}
+              className="px-3 py-1 text-sm bg-red-100 text-red-700 rounded-md hover:bg-red-200 transition-colors"
+            >
+              ❌ Cancella tutti
+            </button>
+          )}
+        </div>
+        
+
+        
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Filtro per Gruppo/Partito */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">🏛️ Gruppo/Partito</label>
+                         <Select
+               options={selectOptions.gruppi}
+               value={selectOptions.gruppi.find(option => option.value === filters.gruppo)}
+               onChange={(selectedOption) => setFilters(prev => ({ ...prev, gruppo: selectedOption?.value || '' }))}
+               placeholder="Gruppo"
+               className="w-full"
+             />
+          </div>
+
+          {/* Filtro per Parlamentare */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">👤 Parlamentare</label>
+                         <Select
+               options={selectOptions.oratori}
+               value={selectOptions.oratori.find(option => option.value === filters.oratore)}
+               onChange={(selectedOption) => setFilters(prev => ({ ...prev, oratore: selectedOption?.value || '' }))}
+               placeholder="Parlamentare"
+               className="w-full"
+             />
+          </div>
+
+          {/* Filtro per Tipo di Fallacia */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">🎯 Tipo Evento</label>
+                         <Select
+               options={selectOptions.types}
+               value={selectOptions.types.find(option => option.value === filters.type)}
+               onChange={(selectedOption) => setFilters(prev => ({ ...prev, type: selectedOption?.value || '' }))}
+               placeholder="Tipo"
+               className="w-full"
+             />
+          </div>
+
+          {/* Filtro per Gravità */}
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">⚠️ Gravità</label>
+                         <Select
+               options={selectOptions.severities}
+               value={selectOptions.severities.find(option => option.value === filters.severity)}
+               onChange={(selectedOption) => setFilters(prev => ({ ...prev, severity: selectedOption?.value || '' }))}
+               placeholder="Gravità"
+               className="w-full"
+             />
+          </div>
         </div>
       </div>
 
       <div className="space-y-6">
-        {cards.map((card) => (
+        {filteredCards.map((card) => (
           <div key={card.id} className="card">
             <div className="flex items-start justify-between mb-4">
               <div className="flex items-center space-x-3">
@@ -202,11 +336,18 @@ export default function FeedPage() {
         ))}
       </div>
 
-      {cards.length === 0 && (
+      {filteredCards.length === 0 && (
         <div className="text-center py-12">
           <div className="text-gray-400 text-6xl mb-4">📭</div>
-          <h2 className="text-2xl font-semibold text-gray-900 mb-2">Nessun evento</h2>
-          <p className="text-gray-600">Non ci sono eventi da mostrare al momento.</p>
+          <h2 className="text-2xl font-semibold text-gray-900 mb-2">
+            {hasActiveFilters ? 'Nessun evento trovato' : 'Nessun evento'}
+          </h2>
+          <p className="text-gray-600">
+            {hasActiveFilters 
+              ? 'Prova a modificare i filtri applicati per vedere più risultati.' 
+              : 'Non ci sono eventi da mostrare al momento.'
+            }
+          </p>
         </div>
       )}
     </div>

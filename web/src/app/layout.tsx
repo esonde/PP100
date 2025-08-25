@@ -29,7 +29,7 @@ export default function RootLayout({
               <ul className="flex flex-wrap gap-4 sm:gap-6 text-sm sm:text-base">
                 <li><a href="/" className="hover:text-blue-200 transition-colors font-medium">🏠 Home</a></li>
                 <li><a href="/feed/" className="hover:text-blue-200 transition-colors font-medium">📰 Feed</a></li>
-                <li><a href="/metrics/" className="hover:text-blue-200 transition-colors font-medium">�� Metriche</a></li>
+                <li><a href="/metrics/" className="hover:text-blue-200 transition-colors font-medium">📊 Metriche</a></li>
                 <li><a href="/leaderboard/" className="hover:text-blue-200 transition-colors font-medium">🏆 Leaderboard</a></li>
               </ul>
             </nav>
