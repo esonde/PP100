@@ -2,53 +2,32 @@
 
 import { useState, useEffect } from 'react'
 import PoliticoLink from '../components/PoliticoLink'
-
-interface InterventionsData {
-  id: string
-  source: string
-  seduta: string
-  ts_start: string
-  oratore: string
-  gruppo: string
-  text: string
-  spans_frasi: Array<{ start: number; end: number }>
-  source_url: string
-  fetch_etag: string | null
-  fetch_last_modified: string | null
-  ingested_at: string
-}
-
-interface ManifestData {
-  version: string
-  generated_at: string
-  current: {
-    interventions: string
-  }
-  status: {
-    ingest: string
-  }
-  sources: {
-    camera: string
-    senato: string
-  }
-  registry?: {
-    persons: string
-    person_xref: string
-    person_aliases: string
-    party_registry: string
-    party_membership: string
-    roles: string
-    inbox: string
-  }
-}
+import { 
+  ManifestData, 
+  calculateNextUpdate, 
+  formatDate, 
+  getRegistryStats, 
+  getInterventionsInfo 
+} from '../utils/data'
 
 export default function MetricsPage() {
   const [manifestData, setManifestData] = useState<ManifestData | null>(null)
-  const [interventionsCount, setInterventionsCount] = useState<number | null>(null)
+  const [interventionsInfo, setInterventionsInfo] = useState<{
+    count: number
+    filename: string
+    lastUpdate: string
+    source: 'parquet' | 'json' | 'none'
+  } | null>(null)
   const [registryStats, setRegistryStats] = useState<{
     personsCount: number
     partiesCount: number
     inboxCount: number
+    persons: any[]
+    parties: any[]
+  } | null>(null)
+  const [nextUpdate, setNextUpdate] = useState<{
+    nextUpdate: string
+    timeUntil: string
   } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -65,67 +44,18 @@ export default function MetricsPage() {
         const manifest = await manifestResponse.json()
         setManifestData(manifest)
         
-        // If interventions file exists, try to get count
-        if (manifest.current?.interventions) {
-          try {
-            const interventionsResponse = await fetch(`/data/${manifest.current.interventions.split('/').pop()}`)
-
-            if (interventionsResponse.ok) {
-              // For Parquet files, we can't read directly in the browser
-              // But we can check if the file exists and show that
-              setInterventionsCount(-1) // -1 means file exists but count unknown
-            }
-          } catch (e) {
-            // Interventions file not accessible, that's ok
-            setInterventionsCount(0)
-          }
-        } else {
-          setInterventionsCount(0)
-        }
+        // Get interventions info using utility
+        const interventionsInfo = await getInterventionsInfo(manifest)
+        setInterventionsInfo(interventionsInfo)
         
-        // Load registry statistics - always try to load, even if manifest.registry is missing
-        try {
-          const [personsResponse, partiesResponse, inboxResponse] = await Promise.all([
-            fetch('/data/persons.jsonl').catch(() => ({ ok: false, text: () => Promise.resolve('') })),
-            fetch('/data/party_registry.jsonl').catch(() => ({ ok: false, text: () => Promise.resolve('') })),
-            fetch('/data/identities_inbox.jsonl').catch(() => ({ ok: false, text: () => Promise.resolve('') }))
-          ])
-          
-          let personsCount = 0
-          let partiesCount = 0
-          let inboxCount = 0
-          
-          if (personsResponse.ok) {
-            try {
-              const personsText = await personsResponse.text()
-              personsCount = personsText.trim().split('\n').filter((line: string) => line.trim()).length
-            } catch (e) {
-              console.warn('Failed to parse persons.jsonl:', e)
-            }
-          }
-          
-          if (partiesResponse.ok) {
-            try {
-              const partiesText = await partiesResponse.text()
-              partiesCount = partiesText.trim().split('\n').filter((line: string) => line.trim()).length
-            } catch (e) {
-              console.warn('Failed to parse party_registry.jsonl:', e)
-            }
-          }
-          
-          if (inboxResponse.ok) {
-            try {
-              const inboxText = await inboxResponse.text()
-              inboxCount = inboxText.trim().split('\n').filter((line: string) => line.trim()).length
-            } catch (e) {
-              console.warn('Failed to parse identities_inbox.jsonl:', e)
-            }
-          }
-          
-          setRegistryStats({ personsCount, partiesCount, inboxCount })
-        } catch (e) {
-          console.warn('Failed to load registry stats:', e)
-          setRegistryStats({ personsCount: 0, partiesCount: 0, inboxCount: 0 })
+        // Get registry stats using utility
+        const registryStats = await getRegistryStats()
+        setRegistryStats(registryStats)
+        
+        // Calculate next update time
+        if (manifest.generated_at) {
+          const nextUpdateInfo = calculateNextUpdate(manifest.generated_at)
+          setNextUpdate(nextUpdateInfo)
         }
         
         setLoading(false)
@@ -139,20 +69,24 @@ export default function MetricsPage() {
   }, [])
 
   const renderInterventionsCard = () => {
-    if (interventionsCount === null) return null
+    if (!interventionsInfo) return null
     
     let statusText = 'Caricamento...'
     let statusColor = 'text-gray-500'
+    let statusIcon = '📊'
     
-    if (interventionsCount === -1) {
-      statusText = 'File disponibile'
+    if (interventionsInfo.count === -1) {
+      statusText = 'File disponibile (Parquet)'
       statusColor = 'text-green-600'
-    } else if (interventionsCount === 0) {
+      statusIcon = '📊'
+    } else if (interventionsInfo.count === 0) {
       statusText = 'Nessun intervento'
       statusColor = 'text-yellow-600'
+      statusIcon = '⚠️'
     } else {
-      statusText = `${interventionsCount} interventi`
+      statusText = `${interventionsInfo.count} interventi`
       statusColor = 'text-green-600'
+      statusIcon = '✅'
     }
 
     return (
@@ -162,20 +96,19 @@ export default function MetricsPage() {
             <h3 className="text-lg font-semibold text-gray-900">Interventi Oggi</h3>
             <p className={`text-2xl font-bold ${statusColor}`}>{statusText}</p>
             <p className="text-sm text-gray-600 mt-1">
-              {manifestData?.current?.interventions ? 
-                `File: ${manifestData.current.interventions.split('/').pop()}` : 
-                'Nessun file disponibile'
-              }
+              File: {interventionsInfo.filename}
+            </p>
+            <p className="text-sm text-gray-500 mt-1">
+              Ultimo aggiornamento: {interventionsInfo.lastUpdate}
             </p>
           </div>
-          <div className="text-4xl">📊</div>
+          <div className="text-4xl">{statusIcon}</div>
         </div>
-        <div className="mt-4 text-xs text-gray-500">
-          Ultimo aggiornamento: {manifestData?.generated_at ? 
-            new Date(manifestData.generated_at).toLocaleString('it-IT') : 
-            'Sconosciuto'
-          }
-        </div>
+        {interventionsInfo.source === 'parquet' && (
+          <div className="mt-3 p-2 bg-blue-50 rounded text-xs text-blue-700">
+            💡 File Parquet: i dati sono disponibili ma non visualizzabili nel browser
+          </div>
+        )}
       </div>
     )
   }
@@ -375,7 +308,10 @@ export default function MetricsPage() {
               consulta i file Parquet in <code className="bg-blue-100 px-1 rounded">public/data/</code>.
             </p>
             <p className="text-blue-800 text-sm mt-2">
-              <strong>Prossimo aggiornamento:</strong> La pipeline gira ogni 5 minuti tramite cron.
+              <strong>Prossimo aggiornamento:</strong> {nextUpdate ? 
+                `${nextUpdate.nextUpdate} (tra ${nextUpdate.timeUntil})` : 
+                'Calcolo in corso...'
+              }
             </p>
           </div>
         </div>

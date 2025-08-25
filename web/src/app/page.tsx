@@ -42,6 +42,21 @@ export default function Home() {
             </div>
             <span>Esplora Metriche</span>
           </a>
+          <a 
+            href="/interventi/" 
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 sm:py-1 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2 w-full sm:min-w-[200px]"
+          >
+            <div className="flex items-center justify-center w-14 h-14">
+              <Image 
+                src={ASSETS.icons.parliament} 
+                alt="Interventi Icon" 
+                width={48} 
+                height={48}
+                className="w-12 h-12"
+              />
+            </div>
+            <span>Interventi Live</span>
+          </a>
         </div>
       </div>
 
@@ -136,8 +151,8 @@ export default function Home() {
       </div>
 
       <div className="text-center mt-8 text-gray-500">
-        <p>🚧 Progetto in fase di sviluppo - M0 Walking Skeleton</p>
-        <p className="text-sm">Dati attualmente mock per dimostrazione</p>
+        <p>🚧 Progetto in fase di sviluppo - M1 Ingest Live</p>
+        <p className="text-sm">Pipeline di ingest attiva ogni 5 minuti</p>
       </div>
     </div>
   )
