@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import Select from 'react-select'
+import PoliticoLink from '../components/PoliticoLink'
 
 interface Card {
   id: string
@@ -281,7 +282,9 @@ export default function FeedPage() {
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4 text-sm">
                 <div>
                   <span className="font-medium text-gray-700">Oratore:</span>
-                  <span className="ml-2 text-gray-600">{card.metadata.oratore}</span>
+                  <span className="ml-2 text-gray-600">
+                    <PoliticoLink nome={card.metadata.oratore} showIcon={false} />
+                  </span>
                 </div>
                 {card.metadata.gruppo && (
                   <div>

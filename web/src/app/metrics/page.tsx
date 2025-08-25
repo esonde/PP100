@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import PoliticoLink from '../components/PoliticoLink'
 
 interface InterventionsData {
   id: string

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import PoliticoLink from '../components/PoliticoLink'
 
 interface Score {
   oratore: string
@@ -217,7 +218,9 @@ export default function MetricsPage() {
                 <tr key={score.oratore} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="py-3 px-4 text-sm text-gray-500">#{index + 1}</td>
                   <td className="py-3 px-4">
-                    <div className="font-medium text-gray-900">{score.oratore}</div>
+                    <div className="font-medium text-gray-900">
+                      <PoliticoLink nome={score.oratore} showIcon={false} />
+                    </div>
                     <div className="text-xs text-gray-500">
                       Aggiornato: {formatDate(score.last_updated)}
                     </div>
