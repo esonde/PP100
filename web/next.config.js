@@ -5,7 +5,8 @@ const nextConfig = {
   images: {
     unoptimized: true
   },
-  basePath: process.env.NODE_ENV === 'production' ? '/PP100' : ''
+  basePath: '/PP100',
+  assetPrefix: '/PP100/'
 }
 
 module.exports = nextConfig
