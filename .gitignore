@@ -41,3 +41,29 @@ yarn-error.log*
 
 # OS
 Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.so
+
+# Generated data files
+*.parquet
+*.jsonl
+public/data/identities_inbox.jsonl
+public/data/party_membership.parquet
+public/data/party_registry.jsonl
+public/data/person_aliases.parquet
+public/data/person_xref.parquet
+public/data/persons.jsonl
+public/data/roles.parquet
+public/data/interventions-*.parquet
+public/data/cards-*.jsonl
+public/data/scores-*.json
+
+# Ingest generated files
+ingest/public/data/
+ingest/__pycache__/
