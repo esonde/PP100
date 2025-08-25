@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
 import './globals.css'
+import Logo from './components/Logo'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -19,10 +20,9 @@ export default function RootLayout({
       <body className={inter.className}>
         <header className="bg-blue-800 text-white shadow-lg">
           <div className="container mx-auto px-4 py-6">
-            <h1 className="text-3xl font-bold">PP100</h1>
-            <p className="text-blue-100">Parlamento Live - Qualità del Dibattito</p>
+            <Logo size="md" />
             {/* Navigation menu */}
-            <nav className="mt-4">
+            <nav className="mt-6">
               <ul className="flex space-x-6">
                 <li><a href="/PP100/" className="hover:text-blue-200 transition-colors">Home</a></li>
                 <li><a href="/PP100/feed/" className="hover:text-blue-200 transition-colors">Feed</a></li>

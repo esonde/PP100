@@ -11,24 +11,29 @@ export default function Home() {
         <div className="flex justify-center space-x-4">
           <a 
             href="/PP100/feed/" 
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
           >
-            📰 Vedi Feed
+            <span className="text-xl">📰</span>
+            <span>Vedi Feed</span>
           </a>
           <a 
             href="/PP100/metrics/" 
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
           >
-            📊 Esplora Metriche
+            <span className="text-xl">📊</span>
+            <span>Esplora Metriche</span>
           </a>
         </div>
       </div>
 
       <div className="grid md:grid-cols-2 gap-8 mb-12">
         <div className="card">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-            🎯 Obiettivo
-          </h2>
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+              <span className="text-2xl">🎯</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900">Obiettivo</h2>
+          </div>
           <p className="text-gray-600">
             PP100 analizza automaticamente gli interventi parlamentari per rilevare 
             fallacie logiche, spin politici, duplicazioni e misurare la qualità 
@@ -37,9 +42,12 @@ export default function Home() {
         </div>
 
         <div className="card">
-          <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-            🔍 Cosa Monitoriamo
-          </h2>
+          <div className="flex items-center space-x-3 mb-4">
+            <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+              <span className="text-2xl">🔍</span>
+            </div>
+            <h2 className="text-2xl font-semibold text-gray-900">Cosa Monitoriamo</h2>
+          </div>
           <ul className="text-gray-600 space-y-2">
             <li>• Fallacie logiche e argomentative</li>
             <li>• Spin politici e manipolazione</li>
@@ -51,9 +59,12 @@ export default function Home() {
       </div>
 
       <div className="card">
-        <h2 className="text-2xl font-semibold text-gray-900 mb-4">
-          📈 Punteggio PP (Punti Politico)
-        </h2>
+        <div className="flex items-center space-x-3 mb-4">
+          <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+            <span className="text-2xl">📈</span>
+          </div>
+          <h2 className="text-2xl font-semibold text-gray-900">Punteggio PP (Punti Politico)</h2>
+        </div>
         <p className="text-gray-600 mb-4">
           Il sistema calcola un punteggio da 0 a 100 per ogni parlamentare basato su:
         </p>
