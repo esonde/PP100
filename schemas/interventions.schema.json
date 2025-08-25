@@ -1,0 +1,70 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Interventions Schema",
+  "description": "Schema for parliamentary interventions data",
+  "type": "object",
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "SHA256 hash (first 16 chars) of source|seduta|ts_start|oratore|hash(text)",
+      "pattern": "^[a-f0-9]{16}$"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["camera", "senato"],
+      "description": "Source chamber"
+    },
+    "seduta": {
+      "type": "string",
+      "description": "Session identifier"
+    },
+    "ts_start": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Start timestamp in UTC"
+    },
+    "oratore": {
+      "type": "string",
+      "description": "Speaker name"
+    },
+    "gruppo": {
+      "type": "string",
+      "description": "Political group"
+    },
+    "text": {
+      "type": "string",
+      "description": "Full intervention text"
+    },
+    "spans_frasi": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "start": {"type": "integer"},
+          "end": {"type": "integer"}
+        },
+        "required": ["start", "end"]
+      },
+      "description": "Sentence spans with start/end positions"
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Source URL"
+    },
+    "fetch_etag": {
+      "type": ["string", "null"],
+      "description": "ETag from HTTP response"
+    },
+    "fetch_last_modified": {
+      "type": ["string", "null"],
+      "description": "Last-Modified header from HTTP response"
+    },
+    "ingested_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "Ingestion timestamp in UTC"
+    }
+  },
+  "required": ["id", "source", "seduta", "ts_start", "oratore", "gruppo", "text", "spans_frasi", "source_url", "ingested_at"]
+}

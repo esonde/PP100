@@ -2,109 +2,178 @@
 
 import { useState, useEffect } from 'react'
 
-interface Score {
+interface InterventionsData {
+  id: string
+  source: string
+  seduta: string
+  ts_start: string
   oratore: string
   gruppo: string
-  pp_score: number
-  last_updated: string
-  confidence_interval?: {
-    lower: number
-    upper: number
-  }
-  components: {
-    Q: number
-    K: number
-    V: number
-    I: number
-    R: number
-  }
-  metrics: {
-    interventions_count: number
-    fallacies_detected: number
-    duplicates_count: number
-    stance_consistency: number
-  }
+  text: string
+  spans_frasi: Array<{ start: number; end: number }>
+  source_url: string
+  fetch_etag: string | null
+  fetch_last_modified: string | null
+  ingested_at: string
 }
 
-interface ScoresData {
+interface ManifestData {
   version: string
   generated_at: string
-  window_days: number
-  scores: Score[]
+  current: {
+    interventions: string
+  }
+  status: {
+    ingest: string
+  }
+  sources: {
+    camera: string
+    senato: string
+  }
 }
 
 export default function MetricsPage() {
-  const [scoresData, setScoresData] = useState<ScoresData | null>(null)
+  const [manifestData, setManifestData] = useState<ManifestData | null>(null)
+  const [interventionsCount, setInterventionsCount] = useState<number | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [sortBy, setSortBy] = useState<'pp_score' | 'oratore' | 'gruppo'>('pp_score')
-  const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
   useEffect(() => {
-    const fetchScores = async () => {
+    const fetchData = async () => {
       try {
-        const response = await fetch('/data/scores-rolling-20250127.json')
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`)
+        // Fetch manifest first
+        const manifestResponse = await fetch('/data/manifest.json')
+        if (!manifestResponse.ok) {
+          throw new Error(`Failed to fetch manifest: ${manifestResponse.status}`)
         }
         
-        const data: ScoresData = await response.json()
-        setScoresData(data)
+        const manifest = await manifestResponse.json()
+        setManifestData(manifest)
+        
+        // If interventions file exists, try to get count
+        if (manifest.current?.interventions) {
+          try {
+            const interventionsResponse = await fetch(`/data/${manifest.current.interventions.split('/').pop()}`)
+            if (interventionsResponse.ok) {
+              // For Parquet files, we can't read directly in the browser
+              // But we can check if the file exists and show that
+              setInterventionsCount(-1) // -1 means file exists but count unknown
+            }
+          } catch (e) {
+            // Interventions file not accessible, that's ok
+            setInterventionsCount(0)
+          }
+        } else {
+          setInterventionsCount(0)
+        }
+        
         setLoading(false)
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Errore sconosciuto')
+        setError(err instanceof Error ? err.message : 'Unknown error')
         setLoading(false)
       }
     }
 
-    fetchScores()
+    fetchData()
   }, [])
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('it-IT', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    })
+  const renderInterventionsCard = () => {
+    if (interventionsCount === null) return null
+    
+    let statusText = 'Caricamento...'
+    let statusColor = 'text-gray-500'
+    
+    if (interventionsCount === -1) {
+      statusText = 'File disponibile'
+      statusColor = 'text-green-600'
+    } else if (interventionsCount === 0) {
+      statusText = 'Nessun intervento'
+      statusColor = 'text-yellow-600'
+    } else {
+      statusText = `${interventionsCount} interventi`
+      statusColor = 'text-green-600'
+    }
+
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">Interventi Oggi</h3>
+            <p className={`text-2xl font-bold ${statusColor}`}>{statusText}</p>
+            <p className="text-sm text-gray-600 mt-1">
+              {manifestData?.current?.interventions ? 
+                `File: ${manifestData.current.interventions.split('/').pop()}` : 
+                'Nessun file disponibile'
+              }
+            </p>
+          </div>
+          <div className="text-4xl">📊</div>
+        </div>
+        <div className="mt-4 text-xs text-gray-500">
+          Ultimo aggiornamento: {manifestData?.generated_at ? 
+            new Date(manifestData.generated_at).toLocaleString('it-IT') : 
+            'Sconosciuto'
+          }
+        </div>
+      </div>
+    )
   }
 
-  const getScoreColor = (score: number) => {
-    if (score >= 80) return 'text-green-600'
-    if (score >= 70) return 'text-blue-600'
-    if (score >= 60) return 'text-yellow-600'
-    return 'text-red-600'
-  }
-
-  const sortedScores = scoresData?.scores ? [...scoresData.scores].sort((a, b) => {
-    let aValue: any = a[sortBy]
-    let bValue: any = b[sortBy]
+  const renderSourceCard = (source: 'camera' | 'senato') => {
+    const sourceInfo = manifestData?.sources?.[source]
+    const isError = sourceInfo === 'error'
+    const isNoData = sourceInfo === 'no_data'
+    const isUnknown = !sourceInfo || sourceInfo === 'unknown'
     
-    if (sortBy === 'pp_score') {
-      aValue = a.pp_score
-      bValue = b.pp_score
+    let statusText = 'Sconosciuto'
+    let statusColor = 'text-gray-500'
+    let icon = '❓'
+    
+    if (isError) {
+      statusText = 'Errore'
+      statusColor = 'text-red-600'
+      icon = '❌'
+    } else if (isNoData) {
+      statusText = 'Nessun dato'
+      statusColor = 'text-yellow-600'
+      icon = '⚠️'
+    } else if (!isUnknown) {
+      statusText = 'OK'
+      statusColor = 'text-green-600'
+      icon = '✅'
     }
     
-    if (sortOrder === 'asc') {
-      return aValue > bValue ? 1 : -1
-    } else {
-      return aValue < bValue ? 1 : -1
-    }
-  }) : []
+    const sourceName = source === 'camera' ? 'Camera dei Deputati' : 'Senato della Repubblica'
+    const sourceShort = source === 'camera' ? 'Camera' : 'Senato'
 
-  const handleSort = (field: 'pp_score' | 'oratore' | 'gruppo') => {
-    if (sortBy === field) {
-      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc')
-    } else {
-      setSortBy(field)
-      setSortOrder('desc')
-    }
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+        <div className="flex items-center justify-between">
+          <div>
+            <h3 className="text-lg font-semibold text-gray-900">{sourceName}</h3>
+            <p className={`text-2xl font-bold ${statusColor}`}>{statusText}</p>
+            <p className="text-sm text-gray-600 mt-1">
+              {isUnknown ? 'Stato sconosciuto' : 
+               isError ? 'Errore nel fetch' :
+               isNoData ? 'Nessun intervento oggi' :
+               'Dati disponibili'
+              }
+            </p>
+            {!isUnknown && !isError && !isNoData && (
+              <p className="text-xs text-gray-500 mt-2 break-all">
+                {sourceInfo}
+              </p>
+            )}
+          </div>
+          <div className="text-4xl">{icon}</div>
+        </div>
+      </div>
+    )
   }
 
   if (loading) {
     return (
-      <div className="text-center py-8 sm:py-12 px-4">
+      <div className="text-center py-8">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
         <p className="mt-4 text-gray-600">Caricamento metriche...</p>
       </div>
@@ -113,188 +182,138 @@ export default function MetricsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-8 sm:py-12 px-4">
-        <div className="text-red-600 text-4xl sm:text-6xl mb-4">⚠️</div>
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Errore nel caricamento</h2>
-        <p className="text-gray-600 mb-4 px-2">{error}</p>
-        <p className="text-sm text-gray-500 px-2">Verifica che i file di dati siano presenti in public/data/</p>
-      </div>
-    )
-  }
-
-  if (!scoresData) {
-    return (
-      <div className="text-center py-8 sm:py-12 px-4">
-        <div className="text-gray-400 text-4xl sm:text-6xl mb-4">📊</div>
-        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Nessun dato</h2>
-        <p className="text-gray-600 px-2">Non ci sono metriche da mostrare al momento.</p>
+      <div className="text-center py-8">
+        <div className="text-red-600 text-4xl mb-4">⚠️</div>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Errore nel caricamento</h2>
+        <p className="text-gray-600 mb-4">{error}</p>
+        <p className="text-sm text-gray-500">Verifica che i file di dati siano presenti in public/data/</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 sm:px-6">
-      <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">📊 Metriche PP (Punti Politico)</h1>
-        <p className="text-gray-600 text-sm sm:text-base">
-          Punteggi PP (Punti Politico) per i parlamentari
+    <div className="max-w-6xl mx-auto">
+      <div className="mb-8">
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">📊 Dashboard Metriche</h1>
+        <p className="text-gray-600">
+          Monitoraggio in tempo reale della qualità del dibattito parlamentare
         </p>
-        <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500">
-          Finestra rolling: {scoresData.window_days} giorni • 
-          Ultimo aggiornamento: {formatDate(scoresData.generated_at)} • 
-          {scoresData.scores.length} parlamentari monitorati
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {/* Interventions Card */}
+        {renderInterventionsCard()}
+        
+        {/* Camera Source Card */}
+        {renderSourceCard('camera')}
+        
+        {/* Senato Source Card */}
+        {renderSourceCard('senato')}
+        
+        {/* Ingest Status Card */}
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Stato Ingest</h3>
+              <p className={`text-2xl font-bold ${
+                manifestData?.status?.ingest === 'ok' ? 'text-green-600' : 
+                manifestData?.status?.ingest === 'error' ? 'text-red-600' :
+                manifestData?.status?.ingest === 'no_data' ? 'text-yellow-600' :
+                'text-gray-500'
+              }`}>
+                {manifestData?.status?.ingest === 'ok' ? 'OK' : 
+                 manifestData?.status?.ingest === 'error' ? 'Errore' :
+                 manifestData?.status?.ingest === 'no_data' ? 'Nessun dato' :
+                 manifestData?.status?.ingest || 'Sconosciuto'
+                }
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Pipeline di ingest
+              </p>
+            </div>
+            <div className="text-4xl">
+              {manifestData?.status?.ingest === 'ok' ? '✅' : 
+               manifestData?.status?.ingest === 'error' ? '❌' :
+               manifestData?.status?.ingest === 'no_data' ? '⚠️' :
+               '❓'
+              }
+            </div>
+          </div>
+        </div>
+
+        {/* Schema Version Card */}
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Versione Schema</h3>
+              <p className="text-2xl font-bold text-purple-600">
+                {manifestData?.version || 'N/A'}
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Schema dati
+              </p>
+            </div>
+            <div className="text-4xl">📋</div>
+          </div>
+        </div>
+
+        {/* Last Update Card */}
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-orange-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Ultimo Aggiornamento</h3>
+              <p className="text-lg font-bold text-orange-600">
+                {manifestData?.generated_at ? 
+                  new Date(manifestData.generated_at).toLocaleString('it-IT') : 
+                  'N/A'
+                }
+              </p>
+              <p className="text-sm text-gray-600 mt-1">
+                Timestamp UTC
+              </p>
+            </div>
+            <div className="text-4xl">🕒</div>
+          </div>
         </div>
       </div>
 
-      {/* Summary Cards */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-blue-600">
-            {scoresData.scores.length}
+      {/* Additional Info */}
+      <div className="mt-8 bg-gray-50 rounded-lg p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4">Informazioni Sistema</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div>
+            <span className="font-medium text-gray-700">Architettura:</span>
+            <span className="ml-2 text-gray-600">GitHub-only (Pages + Actions)</span>
           </div>
-          <div className="text-sm text-gray-600">Parlamentari</div>
-        </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-green-600">
-            {(scoresData.scores.reduce((sum, s) => sum + s.pp_score, 0) / scoresData.scores.length).toFixed(1)}
+          <div>
+            <span className="font-medium text-gray-700">Pipeline:</span>
+            <span className="ml-2 text-gray-600">Ingest ogni 5 minuti</span>
           </div>
-          <div className="text-sm text-gray-600">PP (Punti Politico) Medio</div>
-        </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-yellow-600">
-            {scoresData.scores.filter(s => s.pp_score >= 80).length}
+          <div>
+            <span className="font-medium text-gray-700">Formato Dati:</span>
+            <span className="ml-2 text-gray-600">Parquet + JSON</span>
           </div>
-          <div className="text-sm text-gray-600">Eccellenti (≥80)</div>
-        </div>
-        <div className="card text-center">
-          <div className="text-2xl font-bold text-red-600">
-            {scoresData.scores.filter(s => s.pp_score < 60).length}
+          <div>
+            <span className="font-medium text-gray-700">Validazione:</span>
+            <span className="ml-2 text-gray-600">Schema JSON + CI/CD</span>
           </div>
-          <div className="text-sm text-gray-600">Critici (&lt;60)</div>
         </div>
       </div>
 
-      {/* Scores Table */}
-      <div className="card">
-        <div className="mb-6">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">Classifica PP (Punti Politico)</h2>
-          <div className="flex space-x-4 text-sm">
-            <button
-              onClick={() => handleSort('pp_score')}
-              className={`px-3 py-1 rounded ${sortBy === 'pp_score' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              PP Score {sortBy === 'pp_score' && (sortOrder === 'desc' ? '↓' : '↑')}
-            </button>
-            <button
-              onClick={() => handleSort('oratore')}
-              className={`px-3 py-1 rounded ${sortBy === 'oratore' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              Nome {sortBy === 'oratore' && (sortOrder === 'desc' ? '↓' : '↑')}
-            </button>
-            <button
-              onClick={() => handleSort('gruppo')}
-              className={`px-3 py-1 rounded ${sortBy === 'gruppo' ? 'bg-blue-100 text-blue-700' : 'text-gray-600 hover:bg-gray-100'}`}
-            >
-              Gruppo {sortBy === 'gruppo' && (sortOrder === 'desc' ? '↓' : '↑')}
-            </button>
-          </div>
-        </div>
-
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-gray-200">
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Pos</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Parlamentare</th>
-                <th className="text-left py-3 px-4 font-medium text-gray-700">Gruppo</th>
-                <th className="text-center py-3 px-4 font-medium text-gray-700">PP Score</th>
-                <th className="text-center py-3 px-4 font-medium text-gray-700">Componenti</th>
-                <th className="text-center py-3 px-4 font-medium text-gray-700">Metriche</th>
-              </tr>
-            </thead>
-            <tbody>
-              {sortedScores.map((score, index) => (
-                <tr key={score.oratore} className="border-b border-gray-100 hover:bg-gray-50">
-                  <td className="py-3 px-4 text-sm text-gray-500">#{index + 1}</td>
-                  <td className="py-3 px-4">
-                    <div className="font-medium text-gray-900">{score.oratore}</div>
-                    <div className="text-xs text-gray-500">
-                      Aggiornato: {formatDate(score.last_updated)}
-                    </div>
-                  </td>
-                  <td className="py-3 px-4 text-sm text-gray-600">{score.gruppo}</td>
-                  <td className="py-3 px-4 text-center">
-                    <div className={`text-2xl font-bold ${getScoreColor(score.pp_score)}`}>
-                      {score.pp_score.toFixed(1)}
-                    </div>
-                    {score.confidence_interval && (
-                      <div className="text-xs text-gray-500">
-                        {score.confidence_interval.lower.toFixed(1)} - {score.confidence_interval.upper.toFixed(1)}
-                      </div>
-                    )}
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="grid grid-cols-5 gap-1 text-xs">
-                      <div className="text-center">
-                        <div className={`font-bold ${getScoreColor(score.components.Q)}`}>Q</div>
-                        <div className="text-gray-600">{score.components.Q}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className={`font-bold ${getScoreColor(score.components.K)}`}>K</div>
-                        <div className="text-gray-600">{score.components.K}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className={`font-bold ${getScoreColor(score.components.V)}`}>V</div>
-                        <div className="text-gray-600">{score.components.V}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className={`font-bold ${getScoreColor(score.components.I)}`}>I</div>
-                        <div className="text-gray-600">{score.components.I}</div>
-                      </div>
-                      <div className="text-center">
-                        <div className={`font-bold ${getScoreColor(score.components.R)}`}>R</div>
-                        <div className="text-gray-600">{score.components.R}</div>
-                      </div>
-                    </div>
-                  </td>
-                  <td className="py-3 px-4">
-                    <div className="text-xs text-gray-600 space-y-1">
-                      <div>Interventi: {score.metrics.interventions_count}</div>
-                      <div>Fallacie: {score.metrics.fallacies_detected}</div>
-                      <div>Duplicati: {score.metrics.duplicates_count}</div>
-                      <div>Coerenza: {(score.metrics.stance_consistency * 100).toFixed(0)}%</div>
-                    </div>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* Legend */}
-      <div className="mt-8 p-4 bg-gray-50 rounded-lg">
-                  <h3 className="font-medium text-gray-900 mb-3">📋 Legenda Componenti PP (Punti Politico)</h3>
-        <div className="grid md:grid-cols-5 gap-4 text-sm">
+      {/* Note about dynamic data */}
+      <div className="mt-8 bg-blue-50 rounded-lg p-6 border-l-4 border-blue-400">
+        <div className="flex items-start">
+          <div className="text-blue-600 text-xl mr-3">ℹ️</div>
           <div>
-            <span className="font-bold text-blue-600">Q - Quality:</span>
-            <div className="text-gray-600">Argomentatività e chiarezza</div>
-          </div>
-          <div>
-            <span className="font-bold text-green-600">K - Knowledge:</span>
-            <div className="text-gray-600">Preparazione e citazioni corrette</div>
-          </div>
-          <div>
-            <span className="font-bold text-yellow-600">V - Veracity:</span>
-            <div className="text-gray-600">Accuratezza e evitare fallacie</div>
-          </div>
-          <div>
-            <span className="font-bold text-purple-600">I - Integrity:</span>
-            <div className="text-gray-600">Coerenza e evitare spin</div>
-          </div>
-          <div>
-            <span className="font-bold text-red-600">R - Respect:</span>
-            <div className="text-gray-600">Civiltà e evitare attacchi personali</div>
+            <h4 className="font-medium text-blue-900 mb-2">Dati Dinamici</h4>
+            <p className="text-blue-800 text-sm">
+              Questa pagina mostra dati in tempo reale dalla pipeline di ingest. I file vengono aggiornati 
+              automaticamente ogni 5 minuti tramite GitHub Actions. Per i dettagli completi degli interventi, 
+              consulta i file Parquet in <code className="bg-blue-100 px-1 rounded">public/data/</code>.
+            </p>
+            <p className="text-blue-800 text-sm mt-2">
+              <strong>Prossimo aggiornamento:</strong> La pipeline gira ogni 5 minuti tramite cron.
+            </p>
           </div>
         </div>
       </div>

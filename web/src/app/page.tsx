@@ -56,9 +56,10 @@ export default function Home() {
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Obiettivo</h2>
           </div>
           <p className="text-gray-600">
-            PP100 analizza automaticamente gli interventi parlamentari per rilevare 
-            fallacie logiche, spin politici, duplicazioni e misurare la qualità 
-            del dibattito democratico.
+            PP100 nasce per <strong>capacitare i cittadini</strong> a comprendere meglio la qualità 
+            del dibattito parlamentare. Analizziamo automaticamente gli interventi per rivelare 
+            come si argomenta, cosa si promette e quanto è credibile, mantenendo sempre 
+            la prova diretta con link ai resoconti originali.
           </p>
         </div>
 
@@ -76,11 +77,11 @@ export default function Home() {
             <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Cosa Monitoriamo</h2>
           </div>
           <ul className="text-gray-600 space-y-2">
-            <li>• Fallacie logiche e argomentative</li>
-            <li>• Spin politici e manipolazione</li>
-            <li>• Duplicazioni e coordinamento messaggi</li>
-            <li>• Coerenza delle posizioni</li>
-            <li>• Qualità generale del dibattito</li>
+            <li>• <strong>Fallacie logiche</strong> (ad hominem, strawman, slippery slope)</li>
+            <li>• <strong>Claim numerici</strong> con verifica automatica vs dati ufficiali</li>
+            <li>• <strong>Near-duplicate</strong> per rilevare coordinamento messaggi</li>
+            <li>• <strong>Commitment tracking</strong> (promesse → fatti → risultati)</li>
+            <li>• <strong>Stance analysis</strong> e coerenza discorso→voto</li>
           </ul>
         </div>
       </div>

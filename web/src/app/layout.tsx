@@ -11,7 +11,6 @@ export const metadata: Metadata = {
   icons: {
     icon: '/images/favicon/favicon.ico',
   },
-  // Force new deployment to ensure all assets are properly served
 }
 
 export default function RootLayout({
@@ -39,7 +38,7 @@ export default function RootLayout({
           {children}
         </main>
         <footer className="bg-gray-100 border-t mt-8 sm:mt-12">
-          <div className="container mx-auto px-4 sm:px-6 py-4 sm:py-6 text-center text-gray-600">
+          <div className="container mx-auto px-4 sm:py-6 text-center text-gray-600">
             <p>PP100 - Progetto open source per il monitoraggio parlamentare</p>
           </div>
         </footer>

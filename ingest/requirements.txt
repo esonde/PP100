@@ -1,0 +1,9 @@
+requests>=2.32.0
+beautifulsoup4>=4.12.3
+lxml>=5.2.2
+pandas>=2.2.2
+pyarrow>=16.1.0
+fastparquet>=2024.5.0
+python-dateutil>=2.9.0
+tenacity>=8.3.0
+syntok>=1.4.4

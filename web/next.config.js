@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export',
-  trailingSlash: true,
-  distDir: 'out',
+  output: 'export',  // Re-enabled for GitHub Pages
+  trailingSlash: true,  // Re-enabled for GitHub Pages
+  distDir: 'out',  // Re-enabled for GitHub Pages
   images: {
     unoptimized: true
   },

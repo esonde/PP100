@@ -1,199 +1,142 @@
-name: PP100 Pipeline - Ingest & Deploy
+name: Ingest Pipeline
 
 on:
-  # Disabilitato temporaneamente per evitare conflitti
-  # push:
-  #   branches: [ main, develop ]
-  # pull_request:
-  #   branches: [ main ]
-  # schedule:
-  #   # Cron ogni 5 minuti per pipeline live
-  #   - cron: '*/5 * * * *'
-  workflow_dispatch: # Permette esecuzione manuale
+  workflow_dispatch:  # Manual trigger
+  schedule:
+    - cron: '*/5 * * * *'  # Every 5 minutes
+  push:
+    branches: [ main ]
+    paths:
+      - 'ingest/**'
+      - '.github/workflows/ingest.yml'
 
 concurrency:
   group: pipeline-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  setup:
+  ingest:
     runs-on: ubuntu-latest
-    outputs:
-      node-version: ${{ steps.setup-node.outputs.node-version }}
-      python-version: ${{ steps.setup-python.outputs.python-version }}
+    
     steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+        cache: 'pip'
         
-      - name: Setup Node.js LTS
-        id: setup-node
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          cache: 'npm'
-          cache-dependency-path: web/package-lock.json
-          
-      - name: Setup Python 3.11
-        id: setup-python
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-          
-      - name: Cache pip dependencies
-        uses: actions/cache@v4
-        with:
-          path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('**/requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-
-  validate:
-    needs: setup
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Install dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install -r ingest/requirements.txt
         
-      - name: Setup Python 3.11
-        uses: actions/setup-python@v4
-        with:
-          python-version: '3.11'
-          
-      - name: Install Python dependencies
-        run: |
-          python -m pip install --upgrade pip
-          pip install jsonschema
-          
-      - name: Validate schemas
-        run: |
-          python scripts/validate_schemas.py
-          
-      - name: Validate manifest structure
-        run: |
-          python -c "
-          import json
-          with open('public/data/manifest.json') as f:
-              manifest = json.load(f)
-          assert 'files' in manifest, 'Manifest must contain files section'
-          assert 'status' in manifest, 'Manifest must contain status section'
-          print('✅ Manifest structure is valid')
-          "
-
-  build-web:
-    needs: [setup, validate]
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+    - name: Run ingest pipeline
+      id: ingest
+      run: |
+        echo "::group::Ingest Pipeline Execution"
+        start_time=$(date +%s)
         
-      - name: Setup Node.js LTS
-        uses: actions/setup-node@v4
-        with:
-          node-version: 'lts/*'
-          cache: 'npm'
-          cache-dependency-path: web/package-lock.json
-          
-      - name: Install dependencies
-        working-directory: web
-        run: npm ci
+        # Run ingest with verbose output
+        python ingest/run_ingest.py --day $(date -u +%F) --verbose 2>&1 | tee ingest.log
         
-      - name: Lint and type check
-        working-directory: web
-        run: |
-          npm run lint
-          npm run type-check
-          
-      - name: Build and export
-        working-directory: web
-        run: npm run build
+        end_time=$(date +%s)
+        duration=$((end_time - start_time))
         
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: web/.next/
-          retention-days: 1
-
-  deploy-pages:
-    needs: [setup, validate, build-web]
-    runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/main'
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+        # Extract metrics from log
+        echo "duration=$duration" >> $GITHUB_OUTPUT
         
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: web-build
-          path: web/out/
-          
-      - name: Setup Pages
-        uses: actions/configure-pages@v4
+        # Count interventions if file was created
+        if [ -f "public/data/interventions-$(date -u +%F).parquet" ]; then
+          echo "interventions_created=true" >> $GITHUB_OUTPUT
+          echo "file_size=$(du -h public/data/interventions-$(date -u +%F).parquet | cut -f1)" >> $GITHUB_OUTPUT
+        else
+          echo "interventions_created=false" >> $GITHUB_OUTPUT
+        fi
         
-      - name: Upload to Pages
-        uses: actions/upload-pages-artifact@v3
-        with:
-          path: web/.next/
-          
-      - name: Deploy to Pages
-        id: deployment
-        uses: actions/deploy-pages@v4
-
-  summary:
-    needs: [setup, validate, build-web, deploy-pages]
-    runs-on: ubuntu-latest
-    if: always()
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
+        echo "::endgroup::"
         
-      - name: Generate job summary
-        run: |
-          echo "## 🚀 PP100 Pipeline Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 📊 Pipeline Status" >> $GITHUB_STEP_SUMMARY
-          echo "- **Setup**: ${{ needs.setup.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Validation**: ${{ needs.validate.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Build**: ${{ needs.build-web.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "- **Deploy**: ${{ needs.deploy-pages.result }}" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
+    - name: Extract job summary data
+      id: summary
+      run: |
+        echo "::group::Extracting Summary Data"
+        
+        # Read manifest for status and sources
+        if [ -f "public/data/manifest.json" ]; then
+          manifest=$(cat public/data/manifest.json)
+          echo "manifest_status=$(echo $manifest | jq -r '.status.ingest')" >> $GITHUB_OUTPUT
+          echo "camera_source=$(echo $manifest | jq -r '.sources.camera // "unknown"')" >> $GITHUB_OUTPUT
+          echo "senato_source=$(echo $manifest | jq -r '.sources.senato // "unknown"')" >> $GITHUB_OUTPUT
+          echo "generated_at=$(echo $manifest | jq -r '.generated_at // "unknown"')" >> $GITHUB_OUTPUT
+        else
+          echo "manifest_status=missing" >> $GITHUB_OUTPUT
+          echo "camera_source=unknown" >> $GITHUB_OUTPUT
+          echo "senato_source=unknown" >> $GITHUB_OUTPUT
+        fi
+        
+        # Extract HTTP status codes and host contacts from log
+        if [ -f "ingest.log" ]; then
+          # Count 304 vs 200 responses
+          echo "status_304=$(grep -c '304' ingest.log || echo '0')" >> $GITHUB_OUTPUT
+          echo "status_200=$(grep -c '200' ingest.log || echo '0')" >> $GITHUB_OUTPUT
+          echo "status_error=$(grep -c 'Error\|ERROR' ingest.log || echo '0')" >> $GITHUB_OUTPUT
           
-          echo "### 📁 Data Files Status" >> $GITHUB_STEP_SUMMARY
-          if [ -f "public/data/manifest.json" ]; then
-            echo "✅ Manifest file present" >> $GITHUB_STEP_SUMMARY
-            echo "- Generated: $(jq -r '.generated_at' public/data/manifest.json)" >> $GITHUB_STEP_SUMMARY
-            echo "- Overall status: $(jq -r '.status.overall' public/data/manifest.json)" >> $GITHUB_STEP_SUMMARY
-          else
-            echo "❌ Manifest file missing" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🔍 Mock Data Counts" >> $GITHUB_STEP_SUMMARY
-          if [ -f "public/data/cards-20250127.jsonl" ]; then
-            CARD_COUNT=$(wc -l < public/data/cards-20250127.jsonl)
-            echo "- Cards: $CARD_COUNT records" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          if [ -f "public/data/scores-rolling-20250127.json" ]; then
-            SCORE_COUNT=$(jq '.scores | length' public/data/scores-rolling-20250127.json)
-            echo "- Scores: $SCORE_COUNT records" >> $GITHUB_STEP_SUMMARY
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "### 🚧 Degradations" >> $GITHUB_STEP_SUMMARY
-          if [ -f "public/data/manifest.json" ]; then
-            DEGRADATIONS=$(jq -r '.status.degradations[]?' public/data/manifest.json 2>/dev/null || echo "None")
-            if [ "$DEGRADATIONS" != "None" ]; then
-              echo "- $DEGRADATIONS" >> $GITHUB_STEP_SUMMARY
-            else
-              echo "- Nessuna degradazione attiva" >> $GITHUB_STEP_SUMMARY
-            fi
-          fi
-          
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "---" >> $GITHUB_STEP_SUMMARY
-          echo "*Pipeline eseguita il ${{ github.event.head_commit.timestamp || 'now' }}*" >> $GITHUB_STEP_SUMMARY
+          # Extract host contacts
+          echo "hosts_contacted=$(grep -o 'https://[^[:space:]]*' ingest.log | sort -u | wc -l)" >> $GITHUB_OUTPUT
+          echo "hosts_list=$(grep -o 'https://[^[:space:]]*' ingest.log | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')" >> $GITHUB_OUTPUT
+        else
+          echo "status_304=0" >> $GITHUB_OUTPUT
+          echo "status_200=0" >> $GITHUB_OUTPUT
+          echo "status_error=0" >> $GITHUB_OUTPUT
+          echo "hosts_contacted=0" >> $GITHUB_OUTPUT
+        fi
+        
+        echo "::endgroup::"
+        
+    - name: Create job summary
+      run: |
+        echo "## 📊 Ingest Pipeline Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🎯 Execution Results" >> $GITHUB_STEP_SUMMARY
+        echo "- **Status**: ${{ steps.summary.outputs.manifest_status }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Duration**: ${{ steps.ingest.outputs.duration }} seconds" >> $GITHUB_STEP_SUMMARY
+        echo "- **Interventions Created**: ${{ steps.ingest.outputs.interventions_created }}" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ steps.ingest.outputs.interventions_created }}" = "true" ]; then
+          echo "- **File Size**: ${{ steps.ingest.outputs.file_size }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🌐 Network Activity" >> $GITHUB_STEP_SUMMARY
+        echo "- **Hosts Contacted**: ${{ steps.summary.outputs.hosts_contacted }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **HTTP 200**: ${{ steps.summary.outputs.status_200 }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **HTTP 304 (Not Modified)**: ${{ steps.summary.outputs.status_304 }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Errors**: ${{ steps.summary.outputs.status_error }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 📍 Sources Used" >> $GITHUB_STEP_SUMMARY
+        echo "- **Camera**: ${{ steps.summary.outputs.camera_source }}" >> $GITHUB_STEP_SUMMARY
+        echo "- **Senato**: ${{ steps.summary.outputs.senato_source }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "### 🕒 Last Update" >> $GITHUB_STEP_SUMMARY
+        echo "- **Generated At**: ${{ steps.summary.outputs.generated_at }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        if [ "${{ steps.summary.outputs.hosts_list }}" != "" ]; then
+          echo "### 🔗 Top Hosts Contacted" >> $GITHUB_STEP_SUMMARY
+          echo "${{ steps.summary.outputs.hosts_list }}" >> $GITHUB_STEP_SUMMARY
+        fi
+        
+    - name: Validate schemas
+      run: |
+        python scripts/validate_schemas.py
+        
+    - name: Build web
+      run: |
+        cd web
+        npm ci
+        npm run build
+        
+    - name: Deploy to Pages
+      uses: actions/deploy-pages@v4
+      with:
+        path: web/out
+      if: success()

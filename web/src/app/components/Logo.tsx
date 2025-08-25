@@ -1,4 +1,4 @@
-import Image from 'next/image'
+// import Image from 'next/image'
 import { ASSETS } from '../config/assets'
 
 interface LogoProps {
@@ -21,13 +21,11 @@ export default function Logo({ size = 'md', showText = true }: LogoProps) {
 
   return (
     <div className="flex items-center space-x-3">
-      {/* Logo - using generated asset */}
+      {/* Logo - using regular img tag temporarily */}
       <div className={`${sizeClasses[size]} bg-white rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-blue-200`}>
-        <Image 
+        <img 
           src={ASSETS.logo.primary} 
           alt="PP100 Logo" 
-          width={64} 
-          height={64}
           className="w-full h-full object-contain p-1"
         />
       </div>
