@@ -177,20 +177,44 @@ jobs:
         
     - name: Build registry and web
       run: |
-        # Install identities dependencies
+        echo "::group::Building Registry"
+        echo "Current directory: $(pwd)"
+        echo "Directory contents:"
+        ls -la
+        
+        echo "Installing Python dependencies..."
         pip install -r identities/requirements.txt
         
-        # Build registry to ensure persons.jsonl exists for web build
+        echo "Python version: $(python --version)"
+        echo "Pip list:"
+        pip list
+        
+        echo "Building registry..."
         python identities/build_registry.py
+        
+        echo "Building memberships..."
         python identities/build_memberships.py
         
-        # Verify files exist
+        echo "Verifying generated files..."
         ls -la public/data/
+        echo "File sizes:"
+        du -h public/data/*
         
-        # Install web dependencies and build
+        echo "Registry contents preview:"
+        head -3 public/data/persons.jsonl || echo "persons.jsonl not found"
+        head -3 public/data/party_registry.jsonl || echo "party_registry.jsonl not found"
+        echo "::endgroup::"
+        
+        echo "::group::Building Web App"
+        echo "Installing web dependencies..."
         cd web
         npm ci
+        
+        echo "Building web app..."
         npm run build
+        
+        echo "Web build completed successfully!"
+        echo "::endgroup::"
         
     - name: Deploy to Pages
       uses: actions/deploy-pages@v4
