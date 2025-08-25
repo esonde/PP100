@@ -104,7 +104,7 @@ export default function MetricsPage() {
 
   if (loading) {
     return (
-      <div className="text-center py-12">
+      <div className="text-center py-8 sm:py-12 px-4">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
         <p className="mt-4 text-gray-600">Caricamento metriche...</p>
       </div>
@@ -113,33 +113,33 @@ export default function MetricsPage() {
 
   if (error) {
     return (
-      <div className="text-center py-12">
-        <div className="text-red-600 text-6xl mb-4">⚠️</div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Errore nel caricamento</h2>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <p className="text-sm text-gray-500">Verifica che i file di dati siano presenti in public/data/</p>
+      <div className="text-center py-8 sm:py-12 px-4">
+        <div className="text-red-600 text-4xl sm:text-6xl mb-4">⚠️</div>
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Errore nel caricamento</h2>
+        <p className="text-gray-600 mb-4 px-2">{error}</p>
+        <p className="text-sm text-gray-500 px-2">Verifica che i file di dati siano presenti in public/data/</p>
       </div>
     )
   }
 
   if (!scoresData) {
     return (
-      <div className="text-center py-12">
-        <div className="text-gray-400 text-6xl mb-4">📊</div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Nessun dato</h2>
-        <p className="text-gray-600">Non ci sono metriche da mostrare al momento.</p>
+      <div className="text-center py-8 sm:py-12 px-4">
+        <div className="text-gray-400 text-4xl sm:text-6xl mb-4">📊</div>
+        <h2 className="text-xl sm:text-2xl font-semibold text-gray-900 mb-2">Nessun dato</h2>
+        <p className="text-gray-600 px-2">Non ci sono metriche da mostrare al momento.</p>
       </div>
     )
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
-      <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">📊 Metriche PP (Punti Politico)</h1>
-        <p className="text-gray-600">
+    <div className="max-w-6xl mx-auto px-4 sm:px-6">
+      <div className="mb-6 sm:mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">📊 Metriche PP (Punti Politico)</h1>
+        <p className="text-gray-600 text-sm sm:text-base">
           Punteggi PP (Punti Politico) per i parlamentari
         </p>
-        <div className="mt-4 text-sm text-gray-500">
+        <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500">
           Finestra rolling: {scoresData.window_days} giorni • 
           Ultimo aggiornamento: {formatDate(scoresData.generated_at)} • 
           {scoresData.scores.length} parlamentari monitorati
@@ -147,7 +147,7 @@ export default function MetricsPage() {
       </div>
 
       {/* Summary Cards */}
-      <div className="grid md:grid-cols-4 gap-6 mb-8">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 sm:gap-6 mb-6 sm:mb-8">
         <div className="card text-center">
           <div className="text-2xl font-bold text-blue-600">
             {scoresData.scores.length}

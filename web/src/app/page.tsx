@@ -3,31 +3,31 @@ import { ASSETS } from './config/assets'
 
 export default function Home() {
   return (
-    <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-12">
-        <h1 className="text-5xl font-bold text-gray-900 mb-4">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6">
+      <div className="text-center mb-8 sm:mb-12">
+        <h1 className="text-3xl sm:text-4xl md:text-5xl font-bold text-gray-900 mb-3 sm:mb-4">
           PP100
         </h1>
-        <p className="text-xl text-gray-600 mb-8">
+        <p className="text-lg sm:text-xl text-gray-600 mb-6 sm:mb-8 px-2">
           Monitoraggio in tempo reale della qualità del dibattito parlamentare italiano
         </p>
-        <div className="flex justify-center space-x-4">
+        <div className="flex flex-col sm:flex-row justify-center space-y-3 sm:space-y-0 sm:space-x-4">
           <a 
             href="/feed/" 
-            className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
+            className="bg-orange-500 hover:bg-orange-600 text-white font-semibold py-2 sm:py-1 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2 w-full sm:min-w-[200px]"
           >
             <Image 
               src={ASSETS.icons.feed} 
               alt="Feed Icon" 
-              width={48} 
-              height={48}
-              className="w-12 h-12"
+              width={56} 
+              height={56}
+              className="w-14 h-14"
             />
             <span>Vedi Feed</span>
           </a>
           <a 
             href="/metrics/" 
-            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
+            className="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 sm:py-1 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2 w-full sm:min-w-[200px]"
           >
             <Image 
               src={ASSETS.icons.dashboard} 
@@ -41,7 +41,7 @@ export default function Home() {
         </div>
       </div>
 
-      <div className="grid md:grid-cols-2 gap-8 mb-12">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8 mb-8 sm:mb-12">
         <div className="card">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
@@ -53,7 +53,7 @@ export default function Home() {
                 className="w-12 h-12"
               />
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900">Obiettivo</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Obiettivo</h2>
           </div>
           <p className="text-gray-600">
             PP100 analizza automaticamente gli interventi parlamentari per rilevare 
@@ -73,7 +73,7 @@ export default function Home() {
                 className="w-12 h-12"
               />
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900">Cosa Monitoriamo</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Cosa Monitoriamo</h2>
           </div>
           <ul className="text-gray-600 space-y-2">
             <li>• Fallacie logiche e argomentative</li>
@@ -96,12 +96,12 @@ export default function Home() {
                 className="w-12 h-12"
               />
             </div>
-            <h2 className="text-2xl font-semibold text-gray-900">Punteggio PP (Punti Politico)</h2>
+            <h2 className="text-xl sm:text-2xl font-semibold text-gray-900">Punteggio PP (Punti Politico)</h2>
           </div>
         <p className="text-gray-600 mb-4">
           Il sistema calcola un punteggio da 0 a 100 per ogni parlamentare basato su:
         </p>
-        <div className="grid md:grid-cols-5 gap-4 text-center">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 text-center">
           <div className="p-4 bg-blue-50 rounded-lg">
             <div className="text-2xl font-bold text-blue-600">Q</div>
             <div className="text-sm text-gray-600">Quality</div>

@@ -22,13 +22,13 @@ export default function Logo({ size = 'md', showText = true }: LogoProps) {
   return (
     <div className="flex items-center space-x-3">
       {/* Logo - using generated asset */}
-      <div className={`${sizeClasses[size]} bg-white rounded-lg flex items-center justify-center shadow-md overflow-hidden`}>
+      <div className={`${sizeClasses[size]} bg-white rounded-lg flex items-center justify-center shadow-lg overflow-hidden border-2 border-blue-200`}>
         <Image 
           src={ASSETS.logo.primary} 
           alt="PP100 Logo" 
           width={64} 
           height={64}
-          className="w-full h-full object-contain"
+          className="w-full h-full object-contain p-1"
         />
       </div>
       
