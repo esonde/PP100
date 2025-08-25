@@ -57,6 +57,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r ingest/requirements.txt
+          pip install -r identities/requirements.txt
+          pip install -r scoring/requirements.txt
           pip install jsonschema
           
       - name: Validate schemas
@@ -91,6 +93,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r ingest/requirements.txt
+          pip install -r identities/requirements.txt
+          pip install -r scoring/requirements.txt
           pip install ruff mypy
           
       - name: Install Node.js dependencies
@@ -136,6 +140,8 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r ingest/requirements.txt
+          pip install -r identities/requirements.txt
+          pip install -r scoring/requirements.txt
           
       - name: Create test data directory
         run: |
@@ -146,9 +152,7 @@ jobs:
         run: |
           echo "Running ingest pipeline in dry-run mode (PR_CI=$PR_CI)"
           cd ingest
-          # Temporary: allow failure during development
-          python run_ingest.py --help || echo "Ingest pipeline dry-run completed (development mode)"
-        continue-on-error: true
+          python run_ingest.py --help || echo "Ingest pipeline dry-run completed"
           
       - name: Verify ingest artifacts
         run: |
@@ -176,14 +180,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r ingest/requirements.txt
+          pip install -r identities/requirements.txt
+          pip install -r scoring/requirements.txt
           
       - name: Run enrich light mode
         run: |
           echo "Running enrich pipeline in light mode (PR_CI=$PR_CI)"
           cd identities
-          # Temporary: allow failure during development
-          python test_p0_hook.py || echo "Enrich pipeline light mode completed (development mode)"
-        continue-on-error: true
+          python run_enrich.py --light
           
       - name: Verify enrich artifacts
         run: |
@@ -210,13 +214,14 @@ jobs:
         run: |
           python -m pip install --upgrade pip
           pip install -r ingest/requirements.txt
-          pip install pandas pyarrow
+          pip install -r identities/requirements.txt
+          pip install -r scoring/requirements.txt
           
       - name: Run scoring dry-run
         run: |
           echo "Running scoring pipeline in dry-run mode (PR_CI=$PR_CI)"
-          echo "Scoring pipeline validation completed (development mode)"
-        continue-on-error: true
+          cd scoring
+          python run_scoring.py --dry-run
           
       - name: Verify scoring artifacts
         run: |
