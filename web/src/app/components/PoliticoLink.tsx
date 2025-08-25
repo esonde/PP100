@@ -26,44 +26,7 @@ export default function PoliticoLink({ nome, className = '', showIcon = true }: 
       try {
         console.log(`PoliticoLink: Searching for "${nome}"`)
         
-        // First try hardcoded mapping for testing
-        const hardcodedMapping: { [key: string]: PersonData } = {
-          // Politici reali dal registry
-          'Elly Schlein': { person_id: 'P000001', nome: 'Elly', cognome: 'Schlein', slug: 'schlein-elly' },
-          'Giorgia Meloni': { person_id: 'P000002', nome: 'Giorgia', cognome: 'Meloni', slug: 'meloni-giorgia' },
-          'Matteo Salvini': { person_id: 'P000003', nome: 'Matteo', cognome: 'Salvini', slug: 'salvini-matteo' },
-          'Silvio Berlusconi': { person_id: 'P000004', nome: 'Silvio', cognome: 'Berlusconi', slug: 'berlusconi-silvio' },
-          'Giuseppe Conte': { person_id: 'P000005', nome: 'Giuseppe', cognome: 'Conte', slug: 'conte-giuseppe' },
-          
-          // Varianti con onorifici
-          'On. Elly Schlein': { person_id: 'P000001', nome: 'Elly', cognome: 'Schlein', slug: 'schlein-elly' },
-          'Onorevole Elly Schlein': { person_id: 'P000001', nome: 'Elly', cognome: 'Schlein', slug: 'schlein-elly' },
-          'Ministro Giorgia Meloni': { person_id: 'P000002', nome: 'Giorgia', cognome: 'Meloni', slug: 'meloni-giorgia' },
-          'Sottosegretario Matteo Salvini': { person_id: 'P000003', nome: 'Matteo', cognome: 'Salvini', slug: 'salvini-matteo' },
-          
-          // Nomi dai dati di test (feed/leaderboard)
-          'Antonio Neri': { person_id: 'P000006', nome: 'Antonio', cognome: 'Neri', slug: 'neri-antonio' },
-          'Elena Bianchi': { person_id: 'P000007', nome: 'Elena', cognome: 'Bianchi', slug: 'bianchi-elena' },
-          'Giulia Verdi': { person_id: 'P000008', nome: 'Giulia', cognome: 'Verdi', slug: 'verdi-giulia' },
-          'Mario Rossi': { person_id: 'P000009', nome: 'Mario', cognome: 'Rossi', slug: 'rossi-mario' },
-          'Anna Bianchi': { person_id: 'P000010', nome: 'Anna', cognome: 'Bianchi', slug: 'bianchi-anna' },
-          'Luca Verdi': { person_id: 'P000011', nome: 'Luca', cognome: 'Verdi', slug: 'verdi-luca' },
-          'Marco Gialli': { person_id: 'P000012', nome: 'Marco', cognome: 'Gialli', slug: 'gialli-marco' },
-          'Sofia Rossi': { person_id: 'P000013', nome: 'Sofia', cognome: 'Rossi', slug: 'rossi-sofia' }
-        }
-        
-        // Check hardcoded mapping first
-        const hardcodedMatch = hardcodedMapping[nome]
-        if (hardcodedMatch) {
-          console.log(`PoliticoLink: Found hardcoded match: ${hardcodedMatch.nome} ${hardcodedMatch.cognome}`)
-          setPersonData(hardcodedMatch)
-          setLoading(false)
-          return
-        }
-        
-        // Try to load from registry
-        console.log(`PoliticoLink: No hardcoded match, trying registry...`)
-        
+        // Load persons registry
         const response = await fetch('/data/persons.jsonl')
         if (!response.ok) {
           console.warn(`PoliticoLink: Failed to fetch persons registry: ${response.status}`)
@@ -115,7 +78,7 @@ export default function PoliticoLink({ nome, className = '', showIcon = true }: 
         }
         
         if (person) {
-          console.log(`PoliticoLink: Found person in registry: ${person.nome} ${person.cognome} (${person.slug})`)
+          console.log(`PoliticoLink: Found person: ${person.nome} ${person.cognome} (${person.slug})`)
         } else {
           console.log(`PoliticoLink: No person found for "${nome}"`)
         }
@@ -139,9 +102,25 @@ export default function PoliticoLink({ nome, className = '', showIcon = true }: 
     return <span className={className}>{nome}</span>
   }
 
-  // If error or no person found, show plain text
+  // If error or no person found, still make it clickable but to a generic slug
   if (error || !personData) {
-    return <span className={className}>{nome}</span>
+    // Create a generic slug from the name for the "not found" page
+    const genericSlug = nome.toLowerCase()
+      .replace(/^(on\.|onorevole|ministro|sottosegretario|presidente|pres\.)\s+/i, '')
+      .replace(/[^a-z0-9\s]/g, '')
+      .replace(/\s+/g, '-')
+      .substring(0, 50)
+    
+    return (
+      <Link 
+        href={`/politico/${genericSlug}`}
+        className={`text-gray-600 hover:text-gray-800 hover:underline transition-colors ${className}`}
+        title={`Cerca profilo di ${nome} (potrebbe non essere ancora mappato)`}
+      >
+        {showIcon && <span className="mr-1">🔍</span>}
+        {nome}
+      </Link>
+    )
   }
 
   // If person found, show clickable link
