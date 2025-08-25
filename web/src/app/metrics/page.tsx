@@ -57,7 +57,7 @@ export default function MetricsPage() {
     const fetchData = async () => {
       try {
         // Fetch manifest first
-        const manifestResponse = await fetch('/data/manifest.json')
+        const manifestResponse = await fetch(`/data/manifest.json?ts=${Date.now()}`)
         if (!manifestResponse.ok) {
           throw new Error(`Failed to fetch manifest: ${manifestResponse.status}`)
         }
@@ -83,39 +83,49 @@ export default function MetricsPage() {
           setInterventionsCount(0)
         }
         
-        // Load registry statistics if available
-        if (manifest.registry) {
-          try {
-            const [personsResponse, partiesResponse, inboxResponse] = await Promise.all([
-              fetch('/data/persons.jsonl'),
-              fetch('/data/party_registry.jsonl'),
-              fetch('/data/identities_inbox.jsonl')
-            ])
-            
-            let personsCount = 0
-            let partiesCount = 0
-            let inboxCount = 0
-            
-            if (personsResponse.ok) {
+        // Load registry statistics - always try to load, even if manifest.registry is missing
+        try {
+          const [personsResponse, partiesResponse, inboxResponse] = await Promise.all([
+            fetch('/data/persons.jsonl').catch(() => ({ ok: false, text: () => Promise.resolve('') })),
+            fetch('/data/party_registry.jsonl').catch(() => ({ ok: false, text: () => Promise.resolve('') })),
+            fetch('/data/identities_inbox.jsonl').catch(() => ({ ok: false, text: () => Promise.resolve('') }))
+          ])
+          
+          let personsCount = 0
+          let partiesCount = 0
+          let inboxCount = 0
+          
+          if (personsResponse.ok) {
+            try {
               const personsText = await personsResponse.text()
-              personsCount = personsText.trim().split('\n').filter(line => line.trim()).length
+              personsCount = personsText.trim().split('\n').filter((line: string) => line.trim()).length
+            } catch (e) {
+              console.warn('Failed to parse persons.jsonl:', e)
             }
-            
-            if (partiesResponse.ok) {
-              const partiesText = await partiesResponse.text()
-              partiesCount = partiesText.trim().split('\n').filter(line => line.trim()).length
-            }
-            
-            if (inboxResponse.ok) {
-              const inboxText = await inboxResponse.text()
-              inboxCount = inboxText.trim().split('\n').filter(line => line.trim()).length
-            }
-            
-            setRegistryStats({ personsCount, partiesCount, inboxCount })
-          } catch (e) {
-            console.warn('Failed to load registry stats:', e)
-            setRegistryStats({ personsCount: 0, partiesCount: 0, inboxCount: 0 })
           }
+          
+          if (partiesResponse.ok) {
+            try {
+              const partiesText = await partiesResponse.text()
+              partiesCount = partiesText.trim().split('\n').filter((line: string) => line.trim()).length
+            } catch (e) {
+              console.warn('Failed to parse party_registry.jsonl:', e)
+            }
+          }
+          
+          if (inboxResponse.ok) {
+            try {
+              const inboxText = await inboxResponse.text()
+              inboxCount = inboxText.trim().split('\n').filter((line: string) => line.trim()).length
+            } catch (e) {
+              console.warn('Failed to parse identities_inbox.jsonl:', e)
+            }
+          }
+          
+          setRegistryStats({ personsCount, partiesCount, inboxCount })
+        } catch (e) {
+          console.warn('Failed to load registry stats:', e)
+          setRegistryStats({ personsCount: 0, partiesCount: 0, inboxCount: 0 })
         }
         
         setLoading(false)
@@ -293,22 +303,38 @@ export default function MetricsPage() {
         </div>
 
         {/* Registry Card */}
-        {registryStats && (
-          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-lg font-semibold text-gray-900">Registry Identità</h3>
-                <p className="text-2xl font-bold text-indigo-600">
-                  {registryStats.personsCount} persone
-                </p>
-                <p className="text-sm text-gray-600 mt-1">
-                  {registryStats.partiesCount} partiti • {registryStats.inboxCount} in inbox
-                </p>
-              </div>
-              <div className="text-4xl">👥</div>
+        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900">Registry Identità</h3>
+              {registryStats ? (
+                <>
+                  <p className="text-2xl font-bold text-indigo-600">
+                    {registryStats.personsCount} persone
+                  </p>
+                  <p className="text-sm text-gray-600 mt-1">
+                    {registryStats.partiesCount} partiti • {registryStats.inboxCount} in inbox
+                  </p>
+                </>
+              ) : (
+                <>
+                  <p className="text-2xl font-bold text-gray-400">
+                    Caricamento...
+                  </p>
+                  <p className="text-sm text-gray-500 mt-1">
+                    Contando persone e partiti...
+                  </p>
+                </>
+              )}
             </div>
+            <div className="text-4xl">👥</div>
           </div>
-        )}
+          {!registryStats && (
+            <div className="mt-4 text-xs text-gray-500">
+              Il registry viene aggiornato automaticamente ogni 5 minuti
+            </div>
+          )}
+        </div>
         
         {/* Schema Version Card */}
         <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">

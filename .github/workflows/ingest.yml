@@ -215,6 +215,36 @@ jobs:
         echo "Building memberships..."
         python identities/build_memberships.py
         
+        echo "Updating manifest timestamps..."
+        python - <<'PY'
+import json, os, datetime, sys
+manifest_path = 'public/data/manifest.json'
+now = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+data = {}
+if os.path.exists(manifest_path):
+    try:
+        with open(manifest_path, 'r', encoding='utf-8') as f:
+            data = json.load(f)
+    except Exception:
+        data = {}
+data.setdefault('version', '1.0.0')
+data['generated_at'] = now
+status = data.get('status') or {}
+status.setdefault('overall', 'healthy')
+status['last_success'] = now
+status.setdefault('degradations', [])
+data['status'] = status
+os.makedirs(os.path.dirname(manifest_path), exist_ok=True)
+with open(manifest_path, 'w', encoding='utf-8') as f:
+    json.dump(data, f, ensure_ascii=False, indent=2)
+print('Manifest updated at', now)
+PY
+
+        echo "Syncing public/data → web/public/data ..."
+        rm -rf web/public/data
+        mkdir -p web/public/data
+        cp -a public/data/. web/public/data/
+
         echo "Verifying generated files..."
         ls -la public/data/
         echo "File sizes:"
