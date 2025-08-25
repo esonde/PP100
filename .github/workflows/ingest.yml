@@ -126,6 +126,13 @@ jobs:
           hosts_contacted=$(grep -o 'https://[^[:space:]]*' ingest.log | sort -u | wc -l)
           hosts_list=$(grep -o 'https://[^[:space:]]*' ingest.log | sort -u | head -5 | tr '\n' ',' | sed 's/,$//')
           
+          # Ensure all values are strings, not empty
+          status_304="${status_304:-0}"
+          status_200="${status_200:-0}"
+          status_error="${status_error:-0}"
+          hosts_contacted="${hosts_contacted:-0}"
+          hosts_list="${hosts_list:-}"
+          
           echo "status_304=$status_304" >> $GITHUB_OUTPUT
           echo "status_200=$status_200" >> $GITHUB_OUTPUT
           echo "status_error=$status_error" >> $GITHUB_OUTPUT
