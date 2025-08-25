@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generated_at": "2025-08-25T11:50:00Z",
+  "generated_at": "2025-08-25T16:11:34.499899",
   "files": {
     "cards": {
       "filename": "cards-20250127.jsonl",
@@ -22,12 +22,15 @@
       "filename": "interventions-2025-08-25.parquet",
       "version": "0.1.0",
       "generated_at": "2025-08-25T08:07:15Z",
+      "checksum": "86db4382c5fa389c2dc5397f691102bf8376ef35420b2b90a7b872b9db56a8be",
+      "record_count": 114,
       "status": "active"
     },
     "persons": {
       "filename": "persons.jsonl",
       "version": "0.1.0",
       "generated_at": "2025-08-25T11:50:00Z",
+      "checksum": "593a525e36d6f4d18fe637462ca32b2bdc73331cebd76cab2d48e1c928f7f2f5",
       "record_count": 10,
       "status": "active"
     },
@@ -35,6 +38,7 @@
       "filename": "party_registry.jsonl",
       "version": "0.1.0",
       "generated_at": "2025-08-25T11:50:00Z",
+      "checksum": "c6adc1d3bce4f35464a78fbd5b08b2dd62b2c0970b6921ce2fa9f8163783bcf3",
       "record_count": 15,
       "status": "active"
     }
