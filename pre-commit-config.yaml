@@ -35,12 +35,12 @@ repos:
 
   # Pre-commit hooks per Node.js/TypeScript
   - repo: https://github.com/pre-commit/mirrors-prettier
-    rev: v3.1.1
+    rev: v3.1.0
     hooks:
       - id: prettier
-        types_or: [javascript, jsx, ts, tsx, json, css, scss, html, md, yaml]
+        types_or: [javascript, jsx, ts, tsx, json, css, scss, html, markdown, yaml]
         additional_dependencies:
-          - prettier@3.1.1
+          - prettier@3.1.0
 
   # ESLint per TypeScript/JavaScript
   - repo: https://github.com/pre-commit/mirrors-eslint
@@ -62,7 +62,6 @@ repos:
         name: PP100 Schema Validation
         entry: python scripts/validate_schemas.py
         language: system
-        types: [json, jsonl]
         pass_filenames: false
         always_run: true
         description: "Valida tutti i file in public/data/ contro gli schemi JSON"
