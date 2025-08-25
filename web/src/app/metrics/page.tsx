@@ -198,109 +198,77 @@ export default function MetricsPage() {
       statusText = 'Nessun dato'
       statusColor = 'text-yellow-600'
       icon = '⚠️'
-    } else if (!isUnknown) {
-      statusText = 'OK'
+    } else if (sourceInfo && sourceInfo !== 'unknown') {
+      statusText = 'Attivo'
       statusColor = 'text-green-600'
       icon = '✅'
     }
     
-    const sourceName = source === 'camera' ? 'Camera dei Deputati' : 'Senato della Repubblica'
-    const sourceShort = source === 'camera' ? 'Camera' : 'Senato'
-
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-blue-500">
+      <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-lg font-semibold text-gray-900">{sourceName}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {source === 'camera' ? 'Camera dei Deputati' : 'Senato della Repubblica'}
+            </h3>
             <p className={`text-2xl font-bold ${statusColor}`}>{statusText}</p>
             <p className="text-sm text-gray-600 mt-1">
-              {isUnknown ? 'Stato sconosciuto' : 
-               isError ? 'Errore nel fetch' :
-               isNoData ? 'Nessun intervento oggi' :
-               'Dati disponibili'
-              }
+              {source === 'camera' ? 'Assemblea' : 'Aula'}
             </p>
-            {!isUnknown && !isError && !isNoData && (
-              <p className="text-xs text-gray-500 mt-2 break-all">
-                {sourceInfo}
-              </p>
-            )}
           </div>
           <div className="text-4xl">{icon}</div>
         </div>
+        {sourceInfo && sourceInfo !== 'unknown' && sourceInfo !== 'error' && sourceInfo !== 'no_data' && (
+          <div className="mt-4 text-xs text-gray-500 break-all">
+            <a href={sourceInfo} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
+              {sourceInfo}
+            </a>
+          </div>
+        )}
       </div>
     )
   }
 
   if (loading) {
     return (
-      <div className="text-center py-8">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
-        <p className="mt-4 text-gray-600">Caricamento metriche...</p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Caricamento metriche...</p>
+        </div>
       </div>
     )
   }
 
   if (error) {
     return (
-      <div className="text-center py-8">
-        <div className="text-red-600 text-4xl mb-4">⚠️</div>
-        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Errore nel caricamento</h2>
-        <p className="text-gray-600 mb-4">{error}</p>
-        <p className="text-sm text-gray-500">Verifica che i file di dati siano presenti in public/data/</p>
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
+        <div className="bg-red-50 border border-red-200 rounded-lg p-6">
+          <div className="flex items-center">
+            <div className="text-red-600 text-xl mr-3">❌</div>
+            <div>
+              <h3 className="text-lg font-semibold text-red-900">Errore nel caricamento</h3>
+              <p className="text-red-800 mt-1">{error}</p>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
-    <div className="max-w-6xl mx-auto">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-8">
       <div className="mb-8">
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">📊 Dashboard Metriche</h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-2">Metriche Sistema</h1>
         <p className="text-gray-600">
-          Monitoraggio in tempo reale della qualità del dibattito parlamentare
+          Monitoraggio in tempo reale della pipeline di ingest e dello stato del registry
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {/* Interventions Card */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
         {renderInterventionsCard()}
-        
-        {/* Camera Source Card */}
         {renderSourceCard('camera')}
-        
-        {/* Senato Source Card */}
         {renderSourceCard('senato')}
-        
-        {/* Ingest Status Card */}
-        <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-green-500">
-          <div className="flex items-center justify-between">
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900">Stato Ingest</h3>
-              <p className={`text-2xl font-bold ${
-                manifestData?.status?.ingest === 'ok' ? 'text-green-600' : 
-                manifestData?.status?.ingest === 'error' ? 'text-red-600' :
-                manifestData?.status?.ingest === 'no_data' ? 'text-yellow-600' :
-                'text-gray-500'
-              }`}>
-                {manifestData?.status?.ingest === 'ok' ? 'OK' : 
-                 manifestData?.status?.ingest === 'error' ? 'Errore' :
-                 manifestData?.status?.ingest === 'no_data' ? 'Nessun dato' :
-                 manifestData?.status?.ingest || 'Sconosciuto'
-                }
-              </p>
-              <p className="text-sm text-gray-600 mt-1">
-                Pipeline di ingest
-              </p>
-            </div>
-            <div className="text-4xl">
-              {manifestData?.status?.ingest === 'ok' ? '✅' : 
-               manifestData?.status?.ingest === 'error' ? '❌' :
-               manifestData?.status?.ingest === 'no_data' ? '⚠️' :
-               '❓'
-              }
-            </div>
-          </div>
-        </div>
 
         {/* Registry Card */}
         <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">

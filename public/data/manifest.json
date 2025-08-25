@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generated_at": "2025-08-25T05:03:41.544232",
+  "generated_at": "2025-08-25T11:30:00Z",
   "files": {
     "cards": {
       "filename": "cards-20250127.jsonl",
@@ -17,16 +17,31 @@
       "checksum": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
       "record_count": 8,
       "status": "active"
+    },
+    "interventions": {
+      "filename": "interventions-2025-08-25.parquet",
+      "version": "0.1.0",
+      "generated_at": "2025-08-25T08:07:15Z",
+      "status": "active"
     }
   },
   "status": {
     "overall": "healthy",
-    "last_success": "2025-01-27T10:00:00Z",
+    "last_success": "2025-08-25T08:07:15Z",
     "degradations": [],
     "ingest": "ok"
   },
   "current": {
     "interventions": "public/data/interventions-2025-08-25.parquet"
+  },
+  "registry": {
+    "persons": "public/data/persons.jsonl",
+    "person_xref": "public/data/person_xref.parquet",
+    "person_aliases": "public/data/person_aliases.parquet",
+    "party_registry": "public/data/party_registry.jsonl",
+    "party_membership": "public/data/party_membership.parquet",
+    "roles": "public/data/roles.parquet",
+    "inbox": "public/data/identities_inbox.jsonl"
   },
   "sources": {
     "camera": "https://documenti.camera.it/apps/commonServices/getDocumento.ashx?idLegislatura=19&idSeduta=1233&sezione=assemblea&tipoDoc=sommario",
