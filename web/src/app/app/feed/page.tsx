@@ -30,7 +30,7 @@ export default function FeedPage() {
     const fetchCards = async () => {
       try {
         // In produzione, questo dovrebbe leggere dal manifest per trovare il file corrente
-        const response = await fetch('/data/cards-20250127.jsonl')
+        const response = await fetch('/PP100/data/cards-20250127.jsonl')
         if (!response.ok) {
           throw new Error(`HTTP error! status: ${response.status}`)
         }

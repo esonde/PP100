@@ -10,13 +10,13 @@ export default function Home() {
         </p>
         <div className="flex justify-center space-x-4">
           <a 
-            href="/feed" 
+            href="/PP100/feed/" 
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
           >
             📰 Vedi Feed
           </a>
           <a 
-            href="/metrics" 
+            href="/PP100/metrics/" 
             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors"
           >
             📊 Esplora Metriche
