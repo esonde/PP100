@@ -135,9 +135,9 @@ export default function MetricsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 sm:px-6">
       <div className="mb-6 sm:mb-8">
-        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">📊 Metriche PP (Punti Politico)</h1>
+        <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">🏆 Leaderboard PP100</h1>
         <p className="text-gray-600 text-sm sm:text-base">
-          Punteggi PP (Punti Politico) per i parlamentari
+          Classifica parlamentari per qualità del dibattito - Punti Politico (PP)
         </p>
         <div className="mt-3 sm:mt-4 text-xs sm:text-sm text-gray-500">
           Finestra rolling: {scoresData.window_days} giorni • 
