@@ -236,6 +236,13 @@ jobs:
         echo "Web build completed successfully!"
         echo "::endgroup::"
         
+    - name: Upload GitHub Pages artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: github-pages
+        path: web/out
+        retention-days: 1
+        
     - name: Deploy to Pages
       uses: actions/deploy-pages@v4
       with:
