@@ -85,7 +85,9 @@ const STATIC_PERSONS: { [key: string]: PersonData } = {
 // Generate static params for build
 export async function generateStaticParams() {
   // Return all known slugs for static generation
-  return Object.keys(STATIC_PERSONS).map(slug => ({
+  // Limit to prevent build issues
+  const slugs = Object.keys(STATIC_PERSONS).slice(0, 10)
+  return slugs.map(slug => ({
     slug: slug
   }))
 }
