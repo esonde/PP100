@@ -21,22 +21,17 @@ export default function Logo({ size = 'md', showText = true }: LogoProps) {
 
   return (
     <div className="flex items-center space-x-3">
-      {/* Logo - will use generated asset when available */}
-      <div className={`${sizeClasses[size]} bg-white rounded-lg flex items-center justify-center shadow-md`}>
-        {/* TODO: Uncomment when you have the generated logo */}
-        {/* <Image 
+      {/* Logo - using generated asset */}
+      <div className={`${sizeClasses[size]} bg-white rounded-lg flex items-center justify-center shadow-md overflow-hidden`}>
+        <Image 
           src={ASSETS.logo.primary} 
           alt="PP100 Logo" 
           width={64} 
           height={64}
           className="w-full h-full object-contain"
-          onError={(e) => {
-            // Fallback to PNG if SVG fails
-            const target = e.target as HTMLImageElement
-            target.src = ASSETS.logo.fallback
-          }}
-        /> */}
-        <span className={`${textSizes[size]} font-bold text-blue-800`}>PP</span>
+        />
+        {/* Fallback placeholder - commented out when logo is active */}
+        {/* <span className={`${textSizes[size]} font-bold text-blue-800`}>PP</span> */}
       </div>
       
       {showText && (

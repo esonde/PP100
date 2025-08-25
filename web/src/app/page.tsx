@@ -1,3 +1,6 @@
+import Image from 'next/image'
+import { ASSETS } from './config/assets'
+
 export default function Home() {
   return (
     <div className="max-w-4xl mx-auto">
@@ -13,14 +16,26 @@ export default function Home() {
             href="/PP100/feed/" 
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
           >
-            <span className="text-xl">📰</span>
+            <Image 
+              src={ASSETS.icons.feed} 
+              alt="Feed Icon" 
+              width={24} 
+              height={24}
+              className="w-6 h-6"
+            />
             <span>Vedi Feed</span>
           </a>
           <a 
             href="/PP100/metrics/" 
             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
           >
-            <span className="text-xl">📊</span>
+            <Image 
+              src={ASSETS.icons.dashboard} 
+              alt="Metrics Icon" 
+              width={24} 
+              height={24}
+              className="w-6 h-6"
+            />
             <span>Esplora Metriche</span>
           </a>
         </div>
@@ -30,7 +45,13 @@ export default function Home() {
         <div className="card">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">🎯</span>
+              <Image 
+                src={ASSETS.icons.parliament} 
+                alt="Objective Icon" 
+                width={24} 
+                height={24}
+                className="w-6 h-6"
+              />
             </div>
             <h2 className="text-2xl font-semibold text-gray-900">Obiettivo</h2>
           </div>
@@ -44,7 +65,13 @@ export default function Home() {
         <div className="card">
           <div className="flex items-center space-x-3 mb-4">
             <div className="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
-              <span className="text-2xl">🔍</span>
+              <Image 
+                src={ASSETS.icons.monitoring} 
+                alt="Monitoring Icon" 
+                width={24} 
+                height={24}
+                className="w-6 h-6"
+              />
             </div>
             <h2 className="text-2xl font-semibold text-gray-900">Cosa Monitoriamo</h2>
           </div>
@@ -61,7 +88,13 @@ export default function Home() {
       <div className="card">
         <div className="flex items-center space-x-3 mb-4">
           <div className="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
-            <span className="text-2xl">📈</span>
+            <Image 
+              src={ASSETS.icons.dashboard} 
+              alt="Metrics Icon" 
+              width={24} 
+              height={24}
+              className="w-6 h-6"
+            />
           </div>
           <h2 className="text-2xl font-semibold text-gray-900">Punteggio PP (Punti Politico)</h2>
         </div>

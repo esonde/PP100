@@ -11,6 +11,7 @@ export const metadata: Metadata = {
   icons: {
     icon: '/PP100/images/favicon/favicon.ico',
   },
+  // Force new deployment to ensure all assets are properly served
 }
 
 export default function RootLayout({
