@@ -13,7 +13,7 @@ export default function Home() {
         </p>
         <div className="flex justify-center space-x-4">
           <a 
-            href="/PP100/feed/" 
+            href="/feed/" 
             className="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
           >
             <Image 
@@ -27,7 +27,7 @@ export default function Home() {
             <span>Vedi Feed</span>
           </a>
           <a 
-            href="/PP100/metrics/" 
+            href="/metrics/" 
             className="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center space-x-2"
           >
             <Image 

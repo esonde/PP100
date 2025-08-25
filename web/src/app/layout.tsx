@@ -28,9 +28,9 @@ export default function RootLayout({
             {/* Navigation menu */}
             <nav className="mt-6">
               <ul className="flex space-x-6">
-                <li><a href="/PP100/" className="hover:text-blue-200 transition-colors">Home</a></li>
-                <li><a href="/PP100/feed/" className="hover:text-blue-200 transition-colors">Feed</a></li>
-                <li><a href="/PP100/metrics/" className="hover:text-blue-200 transition-colors">Metriche</a></li>
+                <li><a href="/" className="hover:text-blue-200 transition-colors">Home</a></li>
+                <li><a href="/feed/" className="hover:text-blue-200 transition-colors">Feed</a></li>
+                <li><a href="/metrics/" className="hover:text-blue-200 transition-colors">Metriche</a></li>
               </ul>
             </nav>
           </div>
