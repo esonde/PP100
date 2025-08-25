@@ -1,0 +1,45 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Party Membership (SCD2)",
+  "description": "Slowly changing dimension 2 for party memberships",
+  "type": "object",
+  "properties": {
+    "person_id": {
+      "type": "string",
+      "pattern": "^P\\d{6}$",
+      "description": "Reference to persons.person_id"
+    },
+    "party_id": {
+      "type": "string",
+      "pattern": "^PARTY\\d{3}$",
+      "description": "Reference to party_registry.party_id"
+    },
+    "group_id_aula": {
+      "type": "string",
+      "description": "Group identifier in the chamber"
+    },
+    "role_in_party": {
+      "type": "string",
+      "description": "Role within the party"
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this membership became valid"
+    },
+    "valid_to": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "format": "date-time"}
+      ],
+      "description": "When this membership became invalid (null = still valid)"
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Source URL for this membership record"
+    }
+  },
+  "required": ["person_id", "party_id", "valid_from", "source_url"],
+  "additionalProperties": false
+}

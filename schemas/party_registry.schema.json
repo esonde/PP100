@@ -1,0 +1,30 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Party Registry",
+  "description": "Registry of political parties",
+  "type": "object",
+  "properties": {
+    "party_id": {
+      "type": "string",
+      "pattern": "^PARTY\\d{3}$",
+      "description": "Unique identifier for the party (e.g., PARTY001)"
+    },
+    "name": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Full name of the party"
+    },
+    "acronym": {
+      "type": "string",
+      "minLength": 1,
+      "description": "Short acronym or abbreviation"
+    },
+    "created_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "UTC timestamp when record was created"
+    }
+  },
+  "required": ["party_id", "name", "acronym", "created_at"],
+  "additionalProperties": false
+}

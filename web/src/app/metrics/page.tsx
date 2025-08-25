@@ -30,11 +30,25 @@ interface ManifestData {
     camera: string
     senato: string
   }
+  registry?: {
+    persons: string
+    person_xref: string
+    person_aliases: string
+    party_registry: string
+    party_membership: string
+    roles: string
+    inbox: string
+  }
 }
 
 export default function MetricsPage() {
   const [manifestData, setManifestData] = useState<ManifestData | null>(null)
   const [interventionsCount, setInterventionsCount] = useState<number | null>(null)
+  const [registryStats, setRegistryStats] = useState<{
+    personsCount: number
+    partiesCount: number
+    inboxCount: number
+  } | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
@@ -66,6 +80,41 @@ export default function MetricsPage() {
           }
         } else {
           setInterventionsCount(0)
+        }
+        
+        // Load registry statistics if available
+        if (manifest.registry) {
+          try {
+            const [personsResponse, partiesResponse, inboxResponse] = await Promise.all([
+              fetch('/data/persons.jsonl'),
+              fetch('/data/party_registry.jsonl'),
+              fetch('/data/identities_inbox.jsonl')
+            ])
+            
+            let personsCount = 0
+            let partiesCount = 0
+            let inboxCount = 0
+            
+            if (personsResponse.ok) {
+              const personsText = await personsResponse.text()
+              personsCount = personsText.trim().split('\n').filter(line => line.trim()).length
+            }
+            
+            if (partiesResponse.ok) {
+              const partiesText = await partiesResponse.text()
+              partiesCount = partiesText.trim().split('\n').filter(line => line.trim()).length
+            }
+            
+            if (inboxResponse.ok) {
+              const inboxText = await inboxResponse.text()
+              inboxCount = inboxText.trim().split('\n').filter(line => line.trim()).length
+            }
+            
+            setRegistryStats({ personsCount, partiesCount, inboxCount })
+          } catch (e) {
+            console.warn('Failed to load registry stats:', e)
+            setRegistryStats({ personsCount: 0, partiesCount: 0, inboxCount: 0 })
+          }
         }
         
         setLoading(false)
@@ -242,6 +291,24 @@ export default function MetricsPage() {
           </div>
         </div>
 
+        {/* Registry Card */}
+        {registryStats && (
+          <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-indigo-500">
+            <div className="flex items-center justify-between">
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Registry Identità</h3>
+                <p className="text-2xl font-bold text-indigo-600">
+                  {registryStats.personsCount} persone
+                </p>
+                <p className="text-sm text-gray-600 mt-1">
+                  {registryStats.partiesCount} partiti • {registryStats.inboxCount} in inbox
+                </p>
+              </div>
+              <div className="text-4xl">👥</div>
+            </div>
+          </div>
+        )}
+        
         {/* Schema Version Card */}
         <div className="bg-white rounded-lg shadow-md p-6 border-l-4 border-purple-500">
           <div className="flex items-center justify-between">

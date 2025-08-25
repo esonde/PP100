@@ -1,0 +1,39 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Person Crosswalk",
+  "description": "Crosswalk table linking persons to source systems",
+  "type": "object",
+  "properties": {
+    "person_id": {
+      "type": "string",
+      "pattern": "^P\\d{6}$",
+      "description": "Reference to persons.person_id"
+    },
+    "source": {
+      "type": "string",
+      "enum": ["camera", "senato", "wikidata", "other"],
+      "description": "Source system identifier"
+    },
+    "source_id": {
+      "type": "string",
+      "description": "ID in the source system"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "URL to the source record"
+    },
+    "first_seen": {
+      "type": "string",
+      "format": "date-time",
+      "description": "First time this crosswalk was observed"
+    },
+    "last_seen": {
+      "type": "string",
+      "format": "date-time", 
+      "description": "Last time this crosswalk was observed"
+    }
+  },
+  "required": ["person_id", "source", "source_id", "first_seen", "last_seen"],
+  "additionalProperties": false
+}

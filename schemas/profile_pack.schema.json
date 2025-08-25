@@ -1,0 +1,24 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Profile Pack",
+  "description": "Complete profile information for a person (M6)",
+  "type": "object",
+  "properties": {
+    "person_id": {
+      "type": "string",
+      "pattern": "^P\\d{6}$",
+      "description": "Reference to persons.person_id"
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this profile pack was generated"
+    },
+    "version": {
+      "type": "string",
+      "description": "Version of the profile pack"
+    }
+  },
+  "required": ["person_id", "generated_at", "version"],
+  "additionalProperties": true
+}

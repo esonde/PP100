@@ -1,0 +1,52 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Roles (SCD2)",
+  "description": "Slowly changing dimension 2 for roles and positions",
+  "type": "object",
+  "properties": {
+    "person_id": {
+      "type": "string",
+      "pattern": "^P\\d{6}$",
+      "description": "Reference to persons.person_id"
+    },
+    "role_type": {
+      "type": "string",
+      "enum": ["minister", "deputy", "senator", "president", "vice_president", "other"],
+      "description": "Type of role"
+    },
+    "org": {
+      "type": "string",
+      "description": "Organization where the role is held"
+    },
+    "title": {
+      "type": "string",
+      "description": "Title of the role"
+    },
+    "grade": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "integer"}
+      ],
+      "description": "Grade or level of the role"
+    },
+    "valid_from": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this role became valid"
+    },
+    "valid_to": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "format": "date-time"}
+      ],
+      "description": "When this role became invalid (null = still valid)"
+    },
+    "source_url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Source URL for this role record"
+    }
+  },
+  "required": ["person_id", "role_type", "org", "valid_from", "source_url"],
+  "additionalProperties": false
+}
