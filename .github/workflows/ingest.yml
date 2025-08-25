@@ -1,13 +1,14 @@
 name: PP100 Pipeline - Ingest & Deploy
 
 on:
-  push:
-    branches: [ main, develop ]
-  pull_request:
-    branches: [ main ]
-  schedule:
-    # Cron ogni 5 minuti per pipeline live
-    - cron: '*/5 * * * *'
+  # Disabilitato temporaneamente per evitare conflitti
+  # push:
+  #   branches: [ main, develop ]
+  # pull_request:
+  #   branches: [ main ]
+  # schedule:
+  #   # Cron ogni 5 minuti per pipeline live
+  #   - cron: '*/5 * * * *'
   workflow_dispatch: # Permette esecuzione manuale
 
 concurrency:
