@@ -17,6 +17,10 @@ concurrency:
 jobs:
   ingest:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      pages: write
+      contents: read
     
     steps:
     - name: Checkout code
