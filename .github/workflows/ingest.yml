@@ -221,7 +221,7 @@ jobs:
         python - <<'PY'
 import json, os, datetime, sys
 manifest_path = 'public/data/manifest.json'
-now = datetime.datetime.utcnow().replace(microsecond=0).isoformat() + 'Z'
+now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
 data = {}
 if os.path.exists(manifest_path):
     try:
@@ -242,7 +242,7 @@ with open(manifest_path, 'w', encoding='utf-8') as f:
 print('Manifest updated at', now)
 PY
 
-        echo "Syncing public/data → web/public/data ..."
+        echo "Syncing public/data to web/public/data ..."
         rm -rf web/public/data
         mkdir -p web/public/data
         cp -a public/data/. web/public/data/
