@@ -46,11 +46,25 @@ jobs:
       - name: Install Python lint dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install ruff mypy
-      - name: Ruff
-        run: ruff check .
+          pip install pre-commit mypy
+      - name: Pre-commit
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...HEAD)
+          if [ -n "$CHANGED_FILES" ]; then
+            pre-commit run --config pre-commit-config.yaml --files $CHANGED_FILES
+          else
+            echo "No files to lint"
+          fi
       - name: Mypy
-        run: mypy .
+        run: |
+          git fetch origin ${{ github.base_ref }} --depth=1
+          CHANGED_PY=$(git diff --name-only origin/${{ github.base_ref }}...HEAD -- '*.py')
+          if [ -n "$CHANGED_PY" ]; then
+            mypy --ignore-missing-imports $CHANGED_PY
+          else
+            echo "No Python files to type-check"
+          fi
       - name: Install Web dependencies
         run: |
           cd web

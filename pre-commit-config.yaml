@@ -16,7 +16,7 @@ repos:
     rev: 23.12.1
     hooks:
       - id: black
-        language_version: python3.11
+        language_version: python3
         args: [--line-length=88]
 
   # isort per ordinamento import Python
@@ -31,7 +31,7 @@ repos:
     rev: 7.0.0
     hooks:
       - id: flake8
-        args: [--max-line-length=88, --extend-ignore=E203, W503]
+        args: [--max-line-length=88, "--extend-ignore=E203,W503"]
 
   # Pre-commit hooks per Node.js/TypeScript
   - repo: https://github.com/pre-commit/mirrors-prettier
@@ -63,7 +63,6 @@ repos:
         name: PP100 Schema Validation
         entry: python scripts/validate_schemas.py
         language: system
-        types: [json, jsonl]
         pass_filenames: false
         always_run: true
         description: "Valida tutti i file in public/data/ contro gli schemi JSON"
