@@ -1,6 +1,6 @@
 {
   "version": "0.1.0",
-  "generated_at": "2025-08-25T11:50:00Z",
+  "generated_at": "2025-08-25T12:26:02+00:00",
   "files": {
     "cards": {
       "filename": "cards-20250127.jsonl",
@@ -41,7 +41,7 @@
   },
   "status": {
     "overall": "healthy",
-    "last_success": "2025-08-25T11:50:00Z",
+    "last_success": "2025-08-25T12:26:02+00:00",
     "degradations": [],
     "ingest": "ok"
   },

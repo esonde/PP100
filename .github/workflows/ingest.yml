@@ -219,28 +219,28 @@ jobs:
         
         echo "Updating manifest timestamps..."
         python - <<'PY'
-import json, os, datetime, sys
-manifest_path = 'public/data/manifest.json'
-now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
-data = {}
-if os.path.exists(manifest_path):
-    try:
-        with open(manifest_path, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-    except Exception:
+        import json, os, datetime, sys
+        manifest_path = 'public/data/manifest.json'
+        now = datetime.datetime.now(datetime.timezone.utc).replace(microsecond=0).isoformat()
         data = {}
-data.setdefault('version', '1.0.0')
-data['generated_at'] = now
-status = data.get('status') or {}
-status.setdefault('overall', 'healthy')
-status['last_success'] = now
-status.setdefault('degradations', [])
-data['status'] = status
-os.makedirs(os.path.dirname(manifest_path), exist_ok=True)
-with open(manifest_path, 'w', encoding='utf-8') as f:
-    json.dump(data, f, ensure_ascii=False, indent=2)
-print('Manifest updated at', now)
-PY
+        if os.path.exists(manifest_path):
+            try:
+                with open(manifest_path, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+            except Exception:
+                data = {}
+        data.setdefault('version', '1.0.0')
+        data['generated_at'] = now
+        status = data.get('status') or {}
+        status.setdefault('overall', 'healthy')
+        status['last_success'] = now
+        status.setdefault('degradations', [])
+        data['status'] = status
+        os.makedirs(os.path.dirname(manifest_path) or '.', exist_ok=True)
+        with open(manifest_path, 'w', encoding='utf-8') as f:
+            json.dump(data, f, ensure_ascii=False, indent=2)
+        print('Manifest updated at', now)
+        PY
 
         echo "Syncing public/data to web/public/data ..."
         rm -rf web/public/data
