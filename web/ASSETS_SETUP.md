@@ -60,17 +60,26 @@ Sostituisci le emoji nelle pagine con le tue icone generate
 
 - **Logo**: 200x200px minimo, SVG preferito
 - **Icone**: 64x64px (128x128px per 2x)
+- **Favicon**: 32x32px, formato ICO
 - **Formato**: PNG con sfondo trasparente
 - **Colori**: Blu #1e40af come principale
 - **Stile**: Pulito, moderno, professionale
 
 ## ✅ Verifica
 
-1. Salva le immagini nelle directory corrette
-2. Attiva il logo nel componente
-3. Fai un build: `npm run build`
-4. Controlla che le immagini si carichino correttamente
+1. **Salva le immagini** nelle directory corrette
+2. **Attiva il logo** nel componente
+3. **Fai un build**: `npm run build`
+4. **Controlla che le immagini** si carichino correttamente
+5. **Verifica il favicon** nella tab del browser
 
 ## 🔧 Personalizzazione
 
 Puoi modificare i percorsi nel file `web/src/app/config/assets.ts` se vuoi usare nomi diversi per i file.
+
+## 🌐 Percorsi Finali
+
+Una volta generati, gli asset saranno accessibili a:
+- **Logo**: `https://esonde.github.io/PP100/images/logo/pp100-logo.svg`
+- **Icone**: `https://esonde.github.io/PP100/images/icons/[nome-icona].png`
+- **Favicon**: `https://esonde.github.io/PP100/images/favicon/favicon.ico`

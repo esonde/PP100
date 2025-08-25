@@ -1,15 +1,15 @@
 // Asset configuration for PP100
 export const ASSETS = {
   logo: {
-    primary: '/images/logo/pp100-logo.svg',
-    fallback: '/images/logo/pp100-logo.png',
-    favicon: '/images/favicon/favicon.ico'
+    primary: '/PP100/images/logo/pp100-logo.svg',
+    fallback: '/PP100/images/logo/pp100-logo.png',
+    favicon: '/PP100/images/favicon/favicon.ico'
   },
   icons: {
-    dashboard: '/images/icons/dashboard-icon.png',
-    monitoring: '/images/icons/monitoring-icon.png',
-    feed: '/images/icons/feed-icon.png',
-    parliament: '/images/icons/parliament-icon.png'
+    dashboard: '/PP100/images/icons/dashboard-icon.png',
+    monitoring: '/PP100/images/icons/monitoring-icon.png',
+    feed: '/PP100/images/icons/feed-icon.png',
+    parliament: '/PP100/images/icons/parliament-icon.png'
   }
 } as const
 
