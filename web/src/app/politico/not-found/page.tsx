@@ -16,7 +16,7 @@ export default function PoliticoNotFoundPage() {
               Politico Non Trovato
             </h2>
             <p className="text-xl text-gray-600 mb-8">
-              Il parlamentare <strong>"{nome}"</strong> non è presente nel nostro registry o non è stato ancora mappato.
+              Il parlamentare <strong>&ldquo;{nome}&rdquo;</strong> non è presente nel nostro registry o non è stato ancora mappato.
             </p>
           </div>
           
@@ -47,9 +47,9 @@ export default function PoliticoNotFoundPage() {
               💡 Suggerimenti per la Ricerca
             </h3>
             <div className="text-left space-y-2 text-yellow-800">
-              <p>• <strong>Prova senza onorifici</strong>: "Mario Rossi" invece di "On. Mario Rossi"</p>
-              <p>• <strong>Prova varianti del nome</strong>: "Giuseppe" invece di "Peppe"</p>
-              <p>• <strong>Prova cognomi composti</strong>: "Di Maio" invece di "DiMaio"</p>
+              <p>• <strong>Prova senza onorifici</strong>: &ldquo;Mario Rossi&rdquo; invece di &ldquo;On. Mario Rossi&rdquo;</p>
+              <p>• <strong>Prova varianti del nome</strong>: &ldquo;Giuseppe&rdquo; invece di &ldquo;Peppe&rdquo;</p>
+              <p>• <strong>Prova cognomi composti</strong>: &ldquo;Di Maio&rdquo; invece di &ldquo;DiMaio&rdquo;</p>
             </div>
           </div>
           
